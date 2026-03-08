@@ -1,1 +1,2363 @@
-placeholder
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EQUITYKS · Equity Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root {
+  --bg:       #07090e;
+  --bg2:      #0c0f18;
+  --bg3:      #111520;
+  --border:   #1a2035;
+  --border2:  #222840;
+  --green:    #00c853;
+  --green2:   #00a844;
+  --green-glow: rgba(0,200,83,0.15);
+  --violet:   #7c3aed;
+  --violet2:  #6d28d9;
+  --violet-glow: rgba(124,58,237,0.15);
+  --blue:     #2563eb;
+  --cyan:     #06b6d4;
+  --amber:    #f59e0b;
+  --red:      #ef4444;
+  --white:    #f1f5f9;
+  --dim:      #475569;
+  --dim2:     #334155;
+  --text:     #cbd5e1;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCANLINE TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+}
+
+/* ── GRID BG ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,200,83,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,83,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  height: 56px;
+  background: rgba(7,9,14,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+.nav-logo span { color: var(--green); }
+
+.nav-links {
+  display: flex; gap: 4px;
+}
+
+.nav-link {
+  padding: 6px 14px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.nav-link:hover { color: var(--white); background: var(--bg3); }
+.nav-link.active { color: var(--green); border-color: var(--border2); }
+
+.nav-right {
+  display: flex; align-items: center; gap: 12px;
+}
+.nav-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; letter-spacing: 0.15em; color: var(--dim);
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── PAGES ── */
+.page { display: none; position: relative; z-index: 1; min-height: 100vh; padding-top: 56px; }
+.page.active { display: block; }
+
+/* ═══════════════════════════════════════
+   LANDING PAGE
+═══════════════════════════════════════ */
+#page-home {
+  display: none;
+  flex-direction: column;
+}
+#page-home.active { display: flex; }
+
+.hero {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: calc(100vh - 56px);
+  text-align: center;
+  padding: 60px 24px 40px;
+  position: relative;
+}
+
+/* hero glow orbs */
+.hero::before {
+  content: '';
+  position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 300px;
+  background: radial-gradient(ellipse, rgba(0,200,83,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute; top: 35%; left: 30%;
+  width: 400px; height: 200px;
+  background: radial-gradient(ellipse, rgba(124,58,237,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-size: 11px; letter-spacing: 0.35em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 20px;
+  animation: fadeUp 0.6s ease both;
+}
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(72px, 12vw, 140px);
+  letter-spacing: 0.06em;
+  line-height: 0.9;
+  color: var(--white);
+  margin-bottom: 8px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+.hero-title .k { color: var(--green); }
+.hero-title .s { color: var(--violet); }
+
+.hero-sub {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(14px, 2vw, 18px);
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  margin-bottom: 48px;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+/* live ticker bar */
+.ticker-bar {
+  width: 100%; max-width: 900px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 20px;
+  display: flex; gap: 32px; justify-content: center; flex-wrap: wrap;
+  margin-bottom: 60px;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+.ticker-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ticker-sym { font-size: 11px; letter-spacing: 0.12em; color: var(--dim); }
+.ticker-price { font-size: 16px; font-weight: 600; color: var(--white); }
+.ticker-chg { font-size: 11px; }
+.up { color: var(--green); }
+.dn { color: var(--red); }
+
+/* module cards */
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%; max-width: 900px;
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+
+.module-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 28px 32px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+.module-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity 0.2s;
+}
+.module-card.green::before { background: linear-gradient(135deg, rgba(0,200,83,0.06) 0%, transparent 60%); }
+.module-card.violet::before { background: linear-gradient(135deg, rgba(124,58,237,0.07) 0%, transparent 60%); }
+.module-card.blue::before { background: linear-gradient(135deg, rgba(37,99,235,0.07) 0%, transparent 60%); }
+.module-card.cyan::before { background: linear-gradient(135deg, rgba(6,182,212,0.07) 0%, transparent 60%); }
+
+.module-card:hover { transform: translateY(-2px); }
+.module-card:hover::before { opacity: 1; }
+.module-card.green:hover { border-color: rgba(0,200,83,0.4); box-shadow: 0 8px 30px rgba(0,200,83,0.08); }
+.module-card.violet:hover { border-color: rgba(124,58,237,0.4); box-shadow: 0 8px 30px rgba(124,58,237,0.1); }
+.module-card.blue:hover { border-color: rgba(37,99,235,0.4); box-shadow: 0 8px 30px rgba(37,99,235,0.08); }
+.module-card.cyan:hover { border-color: rgba(6,182,212,0.4); box-shadow: 0 8px 30px rgba(6,182,212,0.08); }
+
+.card-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px; letter-spacing: 0.05em; line-height: 1;
+  margin-bottom: 12px;
+}
+.green .card-num { color: rgba(0,200,83,0.25); }
+.violet .card-num { color: rgba(124,58,237,0.25); }
+.blue .card-num { color: rgba(37,99,235,0.25); }
+.cyan .card-num { color: rgba(6,182,212,0.25); }
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px; font-weight: 700;
+  color: var(--white); margin-bottom: 6px;
+}
+.card-desc { font-size: 12px; color: var(--dim); line-height: 1.6; margin-bottom: 16px; }
+.card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+  font-size: 10px; letter-spacing: 0.1em; padding: 3px 8px;
+  border-radius: 2px; border: 1px solid;
+}
+.green .tag { color: var(--green); border-color: rgba(0,200,83,0.25); background: rgba(0,200,83,0.06); }
+.violet .tag { color: var(--violet); border-color: rgba(124,58,237,0.25); background: rgba(124,58,237,0.06); }
+.blue .tag { color: var(--blue); border-color: rgba(37,99,235,0.25); background: rgba(37,99,235,0.06); }
+.cyan .tag { color: var(--cyan); border-color: rgba(6,182,212,0.25); background: rgba(6,182,212,0.06); }
+
+.card-arrow {
+  position: absolute; top: 24px; right: 24px;
+  font-size: 20px; color: var(--border2); transition: all 0.2s;
+}
+.module-card:hover .card-arrow { color: var(--white); transform: translate(2px,-2px); }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+/* ═══════════════════════════════════════
+   SHARED MODULE STYLES
+═══════════════════════════════════════ */
+.module-page { padding: 24px 32px 60px; max-width: 1200px; margin: 0 auto; }
+
+.module-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 28px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.module-breadcrumb {
+  font-size: 10px; letter-spacing: 0.2em; color: var(--dim); text-transform: uppercase;
+  margin-bottom: 6px; cursor: pointer;
+}
+.module-breadcrumb:hover { color: var(--green); }
+.module-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px; letter-spacing: 0.08em; color: var(--white);
+}
+.module-title span { color: var(--green); }
+
+/* Generic field/btn styles shared across modules */
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+.field input, .field select, .field textarea {
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 3px; padding: 10px 13px;
+  color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  outline: none; transition: border-color 0.15s; width: 100%;
+}
+.field input:focus, .field select:focus { border-color: var(--green); box-shadow: 0 0 0 2px rgba(0,200,83,0.07); }
+.field input::placeholder { color: var(--dim2); }
+.field select option { background: var(--bg2); }
+.field .hint { font-size: 10px; color: var(--dim); }
+.field .hint a { color: var(--cyan); text-decoration: none; }
+
+.btn-primary {
+  background: var(--green); color: #000;
+  border: none; border-radius: 3px; padding: 10px 24px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+}
+.btn-primary:hover { background: #00e060; box-shadow: 0 0 20px rgba(0,200,83,0.35); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+.btn-secondary {
+  background: transparent; color: var(--dim); border: 1px solid var(--border2);
+  border-radius: 3px; padding: 9px 16px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+}
+.btn-secondary:hover { border-color: var(--green); color: var(--green); }
+
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 20px 22px;
+}
+
+.section-label {
+  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim);
+  margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.section-label span { color: var(--green); }
+
+.error-box {
+  background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 4px; padding: 12px 16px; color: var(--red); font-size: 12px;
+  display: none; margin-top: 10px;
+}
+.error-box.show { display: block; }
+
+/* Loading */
+.loading-wrap { display: none; margin: 14px 0; }
+.loading-wrap.show { display: block; }
+.loading-track { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+.loading-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--violet)); width: 0; transition: width 0.4s ease; }
+.loading-steps { display: flex; gap: 16px; flex-wrap: wrap; }
+.lstep { font-size: 10px; color: var(--dim); letter-spacing: 0.1em; }
+.lstep.done { color: var(--green); }
+.lstep.act { color: var(--cyan); }
+.spin { display: inline-block; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
+/* ═══════════════════════════════════════
+   1. BALANCE ANALYZER
+═══════════════════════════════════════ */
+.mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.mode-tab {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 18px 22px; cursor: pointer; transition: all 0.18s; position: relative; overflow: hidden;
+}
+.mode-tab.active { border-color: var(--green); background: rgba(0,200,83,0.04); }
+.tab-badge {
+  position: absolute; top: 12px; right: 12px; font-size: 9px; letter-spacing: 0.13em;
+  padding: 2px 7px; border-radius: 2px; text-transform: uppercase; font-weight: 500;
+}
+.badge-api { background: rgba(6,182,212,0.12); color: var(--cyan); border: 1px solid rgba(6,182,212,0.25); }
+.badge-ia  { background: rgba(0,200,83,0.1); color: var(--green); border: 1px solid rgba(0,200,83,0.25); }
+.tab-country { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.1em; color: var(--dim2); margin-bottom: 4px; transition: color 0.18s; }
+.mode-tab.active .tab-country { color: var(--green); }
+.tab-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+.tab-sub { font-size: 10px; color: var(--dim); letter-spacing: 0.08em; }
+
+.panel { display: none; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 24px; margin-bottom: 14px; }
+.panel.active { display: block; }
+.panel-header { font-size: 10px; letter-spacing: 0.22em; color: var(--dim); text-transform: uppercase; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.panel-header span { color: var(--green); }
+
+.form-grid  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: end; }
+.form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: end; }
+
+/* upload zone */
+.upload-zone {
+  border: 1px dashed var(--border2); border-radius: 4px; padding: 28px 18px;
+  text-align: center; cursor: pointer; transition: all 0.18s; background: var(--bg); position: relative;
+}
+.upload-zone:hover,.upload-zone.drag { border-color: var(--green); background: rgba(0,200,83,0.03); }
+.upload-zone input[type=file] { position: absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.upload-icon { font-size: 26px; margin-bottom: 7px; display: block; }
+.upload-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 3px; }
+.upload-sub { font-size: 11px; color: var(--dim); }
+.upload-fname { margin-top: 8px; font-size: 11px; display: none; }
+
+/* features grid */
+.feat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; margin-bottom: 14px; }
+.feat-card {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 12px 14px; cursor: pointer; transition: all 0.15s; position: relative;
+}
+.feat-card.on { border-color: rgba(0,200,83,0.35); background: rgba(0,200,83,0.04); }
+.feat-icon { font-size: 16px; margin-bottom: 5px; display: block; }
+.feat-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--white); margin-bottom: 2px; }
+.feat-desc { font-size: 10px; color: var(--dim); line-height: 1.4; }
+.feat-tog {
+  position: absolute; top: 9px; right: 9px; width: 26px; height: 14px;
+  background: var(--border2); border-radius: 7px; transition: background 0.2s;
+}
+.feat-tog::after {
+  content:''; position:absolute; top:2px; left:2px; width:10px; height:10px;
+  background: var(--dim); border-radius: 50%; transition: all 0.2s;
+}
+.feat-card.on .feat-tog { background: var(--green2); }
+.feat-card.on .feat-tog::after { left: 14px; background: var(--green); }
+
+/* results */
+.results-section { display: none; }
+.results-section.show { display: block; }
+.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding: 18px 0 14px; border-top: 1px solid var(--border); }
+.results-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.07em; color: var(--white); }
+.results-title span { color: var(--green); }
+
+.score-grid { display: grid; grid-template-columns: 200px 1fr; gap: 14px; margin-bottom: 14px; }
+.score-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.score-label { font-size: 10px; letter-spacing: 0.2em; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
+.score-val { font-family: 'Bebas Neue', sans-serif; font-size: 64px; line-height: 1; margin-bottom: 4px; }
+.score-A { color: var(--green); text-shadow: 0 0 24px rgba(0,200,83,0.3); }
+.score-B { color: var(--cyan); text-shadow: 0 0 24px rgba(6,182,212,0.3); }
+.score-C { color: var(--amber); }
+.score-D { color: var(--red); }
+.score-sub { font-size: 10px; color: var(--dim); }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.kpi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; }
+.kpi-name { font-size: 10px; letter-spacing: 0.14em; color: var(--dim); text-transform: uppercase; margin-bottom: 7px; }
+.kpi-val { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.04em; color: var(--white); margin-bottom: 3px; }
+.kpi-delta { font-size: 11px; }
+.d-up { color: var(--green); } .d-dn { color: var(--red); } .d-neu { color: var(--dim); }
+
+.an-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.an-block { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 18px 20px; }
+.an-block.full { grid-column: 1/-1; }
+.block-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.an-text { line-height: 1.8; color: var(--text); font-size: 12px; }
+
+.tag-list { display: flex; flex-direction: column; gap: 7px; }
+.tag-item { display: flex; align-items: flex-start; gap: 9px; padding: 7px 10px; border-radius: 3px; font-size: 12px; line-height: 1.5; }
+.tag-item.risk { background: rgba(239,68,68,0.06); border-left: 2px solid var(--red); }
+.tag-item.opportunity { background: rgba(0,200,83,0.05); border-left: 2px solid var(--green); }
+.tag-item.neutral { background: rgba(6,182,212,0.05); border-left: 2px solid var(--cyan); }
+.tag-icon { flex-shrink: 0; margin-top: 1px; }
+
+.ratio-table { width: 100%; border-collapse: collapse; }
+.ratio-table tr { border-bottom: 1px solid var(--border); }
+.ratio-table tr:last-child { border-bottom: none; }
+.ratio-table td { padding: 7px 0; font-size: 12px; }
+.ratio-table td:first-child { color: var(--dim); }
+.ratio-table td:last-child { text-align: right; color: var(--white); font-weight: 500; }
+
+
+/* ═══════════════════════════════════════
+   2. CHARTS MODULE
+═══════════════════════════════════════ */
+.chart-controls {
+  display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap;
+}
+.chart-controls .field { flex: 1; min-width: 140px; }
+.interval-btns { display: flex; gap: 4px; }
+.ibtn {
+  padding: 6px 12px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: 3px;
+  color: var(--dim); cursor: pointer; transition: all 0.12s; font-family: 'JetBrains Mono', monospace;
+}
+.ibtn:hover { color: var(--white); border-color: var(--border2); }
+.ibtn.active { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
+
+.chart-layout { display: grid; grid-template-columns: 1fr 320px; gap: 14px; }
+.chart-main { display: flex; flex-direction: column; gap: 10px; }
+
+#price-chart { width: 100%; height: 420px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; }
+#volume-chart { width: 100%; height: 110px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; }
+.indicator-chart { width: 100%; height: 120px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; }
+
+.indicators-panel { display: flex; flex-direction: column; gap: 10px; }
+.indicator-toggles {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px;
+}
+.ind-toggle-title { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+.ind-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.ind-toggle:last-child { border-bottom: none; }
+.ind-name { font-size: 12px; color: var(--text); }
+.ind-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ind-chk {
+  width: 28px; height: 15px; background: var(--border2); border-radius: 8px;
+  position: relative; transition: background 0.2s;
+}
+.ind-chk.on { background: var(--green2); }
+.ind-chk::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 11px; height: 11px; background: var(--dim); border-radius: 50%; transition: all 0.2s;
+}
+.ind-chk.on::after { left: 15px; background: var(--green); }
+
+.chart-info { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; }
+.ohlcv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.ohlcv-item { font-size: 11px; }
+.ohlcv-label { color: var(--dim); }
+.ohlcv-val { color: var(--white); font-weight: 500; }
+
+.ai-analysis-box {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 16px;
+}
+.ai-analysis-title { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--green); margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+.ai-analysis-text { font-size: 12px; color: var(--text); line-height: 1.75; }
+.ai-placeholder { color: var(--dim2); font-style: italic; }
+
+/* ═══════════════════════════════════════
+   3. ECONOMIC CALENDAR
+═══════════════════════════════════════ */
+.cal-layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+
+.cal-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.cal-filter {
+  padding: 5px 12px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: 3px;
+  color: var(--dim); cursor: pointer; transition: all 0.12s; font-family: 'JetBrains Mono', monospace;
+}
+.cal-filter:hover { color: var(--white); }
+.cal-filter.on { background: rgba(0,200,83,0.08); border-color: rgba(0,200,83,0.4); color: var(--green); }
+
+.cal-timeline { display: flex; flex-direction: column; gap: 2px; }
+.cal-day-header {
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--dim); padding: 14px 0 6px; position: sticky; top: 56px; background: var(--bg); z-index: 2;
+}
+.cal-event {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 12px 14px; display: grid; grid-template-columns: 70px 1fr auto; gap: 12px;
+  align-items: center; transition: border-color 0.15s;
+}
+.cal-event:hover { border-color: var(--border2); }
+.cal-time { font-size: 11px; color: var(--dim); }
+.cal-impact { display: flex; gap: 2px; }
+.impact-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); }
+.impact-high .impact-dot { background: var(--red); }
+.impact-high .impact-dot:nth-child(2),.impact-high .impact-dot:nth-child(3) { background: var(--red); }
+.impact-med .impact-dot { background: var(--amber); }
+.impact-med .impact-dot:nth-child(2) { background: var(--amber); }
+.impact-low .impact-dot { background: var(--green); }
+.cal-event-name { font-size: 12px; color: var(--white); margin-bottom: 2px; }
+.cal-event-country { font-size: 10px; color: var(--dim); }
+.cal-values { text-align: right; }
+.cal-val-row { font-size: 11px; display: flex; gap: 10px; justify-content: flex-end; }
+.val-label { color: var(--dim); }
+.val-fore { color: var(--cyan); }
+.val-prev { color: var(--dim2); }
+.val-act  { font-weight: 600; }
+.val-act.beat { color: var(--green); }
+.val-act.miss { color: var(--red); }
+.val-act.inline { color: var(--amber); }
+
+/* earnings section */
+.earnings-list { display: flex; flex-direction: column; gap: 8px; }
+.earn-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.earn-card:hover { border-color: var(--border2); }
+.earn-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.earn-sym { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 0.08em; color: var(--white); }
+.earn-name { font-size: 10px; color: var(--dim); }
+.earn-date { font-size: 11px; color: var(--dim); text-align: right; }
+.earn-date-when { font-size: 10px; color: var(--cyan); }
+.earn-estimates { display: flex; gap: 14px; }
+.earn-est { font-size: 11px; }
+.earn-est-label { color: var(--dim); }
+.earn-est-val { color: var(--white); font-weight: 500; }
+.earn-actual { color: var(--green); font-weight: 600; }
+.earn-miss { color: var(--red); font-weight: 600; }
+.earn-badge {
+  display: inline-block; padding: 2px 7px; border-radius: 2px; font-size: 9px; letter-spacing: 0.1em;
+}
+.badge-upcoming { background: rgba(6,182,212,0.1); color: var(--cyan); border: 1px solid rgba(6,182,212,0.25); }
+.badge-reported { background: rgba(0,200,83,0.08); color: var(--green); border: 1px solid rgba(0,200,83,0.25); }
+
+
+/* ═══════════════════════════════════════
+   4. SECTOR DASHBOARD
+═══════════════════════════════════════ */
+.sector-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+.sec-tab {
+  padding: 6px 14px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 3px;
+  color: var(--dim); cursor: pointer; transition: all 0.12s; font-family: 'JetBrains Mono', monospace;
+}
+.sec-tab:hover { color: var(--white); }
+.sec-tab.active { background: rgba(0,200,83,0.08); border-color: rgba(0,200,83,0.4); color: var(--green); }
+
+.sector-layout { display: grid; grid-template-columns: 1fr 320px; gap: 14px; }
+
+.sector-etf-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 20px 22px; margin-bottom: 14px;
+  display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: start;
+  min-height: 140px;
+}
+.etf-sym { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 0.08em; color: var(--white); }
+.etf-name { font-size: 13px; color: var(--dim); margin-bottom: 6px; }
+.etf-desc { font-size: 12px; color: var(--dim2); line-height: 1.5; }
+.etf-perf { text-align: right; }
+.perf-row { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.perf-label { font-size: 10px; letter-spacing: 0.12em; color: var(--dim); text-transform: uppercase; }
+.perf-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.05em; }
+.perf-pos { color: var(--green); }
+.perf-neg { color: var(--red); }
+
+.stocks-table { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.stocks-thead { display: grid; grid-template-columns: 60px 1fr 80px 80px 90px 120px; gap: 0; background: var(--bg3); padding: 10px 16px; }
+.stocks-thead span { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.stocks-thead span:not(:first-child) { text-align: right; }
+
+.stock-row {
+  display: grid; grid-template-columns: 60px 1fr 80px 80px 90px 120px; gap: 0;
+  padding: 12px 16px; border-top: 1px solid var(--border); transition: background 0.12s; cursor: pointer;
+  align-items: center;
+}
+.stock-row:hover { background: rgba(255,255,255,0.02); }
+.stock-rank { font-size: 11px; color: var(--dim2); }
+.stock-sym { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 0.08em; color: var(--white); }
+.stock-name { font-size: 10px; color: var(--dim); }
+.stock-price { font-size: 13px; color: var(--white); text-align: right; }
+.stock-mo, .stock-yr { font-size: 12px; font-weight: 600; text-align: right; }
+.stock-info { font-size: 10px; color: var(--dim); text-align: right; line-height: 1.4; }
+
+/* sector news */
+.news-panel { display: flex; flex-direction: column; gap: 10px; }
+.news-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.news-card:hover { border-color: var(--border2); }
+.news-headline { font-size: 12px; color: var(--white); margin-bottom: 5px; line-height: 1.5; }
+.news-meta { font-size: 10px; color: var(--dim); display: flex; gap: 10px; }
+.news-src { color: var(--cyan); }
+.news-loading { color: var(--dim2); font-size: 12px; text-align: center; padding: 20px; }
+
+
+/* hero tagline stats */
+.hero-tagline {
+  margin: 20px 0 32px;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+.tagline-grid {
+  display: flex; align-items: center; gap: 20px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 14px 28px;
+  flex-wrap: wrap; justify-content: center;
+}
+.tagline-item { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.tagline-num {
+  font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: .05em;
+  color: var(--violet); line-height: 1;
+}
+.tagline-label { font-size: 10px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+.tagline-sep { font-size: 20px; color: var(--border2); }
+
+/* ── Responsive ── */
+@media(max-width:800px) {
+  .modules-grid { grid-template-columns: 1fr; }
+  .chart-layout,.cal-layout,.sector-layout { grid-template-columns: 1fr; }
+  .feat-grid { grid-template-columns: repeat(2,1fr); }
+  .form-grid { grid-template-columns: 1fr; }
+  .score-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .an-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo" onclick="goHome()"><span style="color:var(--dim)">EQUIT</span><span style="color:var(--violet)">Y</span><span style="color:var(--violet)">K</span><span style="color:var(--violet)">S</span></div>
+  <div class="nav-links">
+    <div class="nav-link" onclick="showPage('home')">Inicio</div>
+    <div class="nav-link" onclick="showPage('balance')">Balances</div>
+    <div class="nav-link" onclick="showPage('charts')">Gráficos</div>
+    <div class="nav-link" onclick="showPage('calendar')">Calendario</div>
+    <div class="nav-link" onclick="showPage('sectors')">Sectores</div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-status"><div class="status-dot"></div>LIVE</div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════
+     HOME
+════════════════════════════════════ -->
+<div class="page" id="page-home">
+  <div class="hero">
+    <div class="hero-eyebrow">Equity Intelligence Platform</div>
+    <div class="hero-title"><span style="color:var(--dim2)">EQUIT</span><span style="color:var(--violet)">Y</span><span style="color:var(--violet)">K</span><span style="color:var(--violet)">S</span></div>
+
+    <div class="hero-tagline">
+      <div class="tagline-grid">
+        <div class="tagline-item"><span class="tagline-num">4</span><span class="tagline-label">Módulos de análisis</span></div>
+        <div class="tagline-sep">·</div>
+        <div class="tagline-item"><span class="tagline-num">50+</span><span class="tagline-label">Acciones cubiertas</span></div>
+        <div class="tagline-sep">·</div>
+        <div class="tagline-item"><span class="tagline-num">9</span><span class="tagline-label">Sectores del S&P 500</span></div>
+        <div class="tagline-sep">·</div>
+        <div class="tagline-item"><span class="tagline-num">5</span><span class="tagline-label">Regiones del mundo</span></div>
+      </div>
+    </div>
+
+    <div class="modules-grid">
+      <div class="module-card green" onclick="showPage('balance')">
+        <div class="card-num">01</div>
+        <div class="card-title">Balance Analyzer</div>
+        <div class="card-desc">Analizá estados financieros de empresas USA y ARG. PDF, Excel, API — IA interpreta todo.</div>
+        <div class="card-tags">
+          <span class="tag">NYSE · NASDAQ</span>
+          <span class="tag">BYMA · CNV</span>
+          <span class="tag">IA Parser</span>
+        </div>
+        <div class="card-arrow">↗</div>
+      </div>
+      <div class="module-card violet" onclick="showPage('charts')">
+        <div class="card-num">02</div>
+        <div class="card-title">Chart Terminal</div>
+        <div class="card-desc">Gráficos avanzados con SMA, EMA, RSI, MACD, Bollinger y análisis técnico escrito por IA.</div>
+        <div class="card-tags">
+          <span class="tag">Velas japonesas</span>
+          <span class="tag">7 indicadores</span>
+          <span class="tag">Análisis IA</span>
+        </div>
+        <div class="card-arrow">↗</div>
+      </div>
+      <div class="module-card blue" onclick="showPage('calendar')">
+        <div class="card-num">03</div>
+        <div class="card-title">Calendario Económico</div>
+        <div class="card-desc">Eventos macro, decisiones de tasas, datos de empleo y calendario de presentación de balances.</div>
+        <div class="card-tags">
+          <span class="tag">Fed · BCE</span>
+          <span class="tag">Earnings</span>
+          <span class="tag">Macro datos</span>
+        </div>
+        <div class="card-arrow">↗</div>
+      </div>
+      <div class="module-card cyan" onclick="showPage('sectors')">
+        <div class="card-num">04</div>
+        <div class="card-title">Sector Dashboard</div>
+        <div class="card-desc">Performance por sector, ranking de acciones, y noticias relevantes en tiempo real.</div>
+        <div class="card-tags">
+          <span class="tag">ETF Sectoriales</span>
+          <span class="tag">Rankings</span>
+          <span class="tag">Noticias</span>
+        </div>
+        <div class="card-arrow">↗</div>
+      </div>
+    </div>
+
+    <div class="ticker-bar" id="hero-ticker" style="display:none;margin-top:24px">
+      <div class="ticker-item" id="ti-SPY" style="display:none"><div class="ticker-sym">SPY</div><div class="ticker-price" id="t-SPY">—</div><div class="ticker-chg" id="tc-SPY">—</div></div>
+      <div class="ticker-item" id="ti-QQQ" style="display:none"><div class="ticker-sym">QQQ</div><div class="ticker-price" id="t-QQQ">—</div><div class="ticker-chg" id="tc-QQQ">—</div></div>
+      <div class="ticker-item" id="ti-AAPL" style="display:none"><div class="ticker-sym">AAPL</div><div class="ticker-price" id="t-AAPL">—</div><div class="ticker-chg" id="tc-AAPL">—</div></div>
+      <div class="ticker-item" id="ti-MELI" style="display:none"><div class="ticker-sym">MELI</div><div class="ticker-price" id="t-MELI">—</div><div class="ticker-chg" id="tc-MELI">—</div></div>
+      <div class="ticker-item" id="ti-VIST" style="display:none"><div class="ticker-sym">VIST</div><div class="ticker-price" id="t-VIST">—</div><div class="ticker-chg" id="tc-VIST">—</div></div>
+      <div class="ticker-item" id="ti-BTC-USD" style="display:none"><div class="ticker-sym">BTC</div><div class="ticker-price" id="t-BTC-USD">—</div><div class="ticker-chg" id="tc-BTC-USD">—</div></div>
+      <div style="font-size:9px;color:var(--dim2);letter-spacing:.1em;align-self:flex-end;margin-left:auto" id="ticker-ts"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     BALANCE ANALYZER
+════════════════════════════════════ -->
+<div class="page" id="page-balance">
+<div class="module-page">
+  <div class="module-header">
+    <div>
+      <div class="module-breadcrumb" onclick="showPage('home')">← EQUITYKS</div>
+      <div class="module-title">Balance <span>Analyzer</span></div>
+    </div>
+    <div style="font-size:10px;color:var(--dim);letter-spacing:.15em">v4 · AI POWERED</div>
+  </div>
+
+  <div class="mode-tabs">
+    <div class="mode-tab active" id="btab-usa" onclick="bSwitchMode('usa')">
+      <div class="tab-badge badge-api">API Tiempo Real</div>
+      <div class="tab-country">US</div>
+      <div class="tab-title">Empresas USA</div>
+      <div class="tab-sub">NYSE · NASDAQ · SP500</div>
+    </div>
+    <div class="mode-tab" id="btab-ar" onclick="bSwitchMode('ar')">
+      <div class="tab-badge badge-ia">IA Parser</div>
+      <div class="tab-country">AR</div>
+      <div class="tab-title">Empresas ARG</div>
+      <div class="tab-sub">BYMA · CNV · NIIF</div>
+    </div>
+  </div>
+
+  <!-- USA Panel -->
+  <div class="panel active" id="bpanel-usa">
+    <div class="panel-header">// MODO USA — <span>Financial Modeling Prep API</span></div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>Ticker(s)</label>
+        <input type="text" id="usa-ticker" placeholder="Ej: AAPL, MELI, VIST">
+      </div>
+      <div class="field">
+        <label>Período</label>
+        <select id="usa-period"><option value="annual">Anual</option><option value="quarter" selected>Trimestral</option></select>
+      </div>
+      <div class="field">
+        <label>Períodos</label>
+        <select id="usa-limit"><option value="4">4</option><option value="8">8</option><option value="12">12</option></select>
+      </div>
+    </div>
+    <div class="form-grid" style="align-items:end">
+      <div class="field" style="grid-column:span 2">
+        <label>API Key (FMP)</label>
+        <input type="password" id="usa-apikey" placeholder="Tu API key de FMP">
+        <div class="hint">Gratis en <a href="https://financialmodelingprep.com" target="_blank">financialmodelingprep.com</a></div>
+      </div>
+      <div class="field" style="justify-content:flex-end">
+        <button class="btn-primary" id="bbtn-usa" onclick="bAnalyzeUSA()">⚡ ANALIZAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AR Panel -->
+  <div class="panel" id="bpanel-ar">
+    <div class="panel-header">// MODO ARG — <span>IA Parser · PDF / Excel / CSV</span></div>
+    <div class="form-grid2" style="margin-bottom:14px">
+      <div class="field">
+        <label>Empresa</label>
+        <input type="text" id="ar-company" placeholder="Ej: YPF, Loma Negra, Galicia">
+      </div>
+      <div class="field">
+        <label>Período</label>
+        <input type="text" id="ar-period" placeholder="Ej: Q3 2024, Anual 2023">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>Balance — PDF, Excel o CSV</label>
+      <div class="upload-zone" id="bupload-zone">
+        <input type="file" id="ar-file" accept=".pdf,.xls,.xlsx,.csv" onchange="bHandleFile(event)">
+        <span class="upload-icon" id="bupload-icon">📄</span>
+        <div class="upload-title">Arrastrá o hacé click para subir</div>
+        <div class="upload-sub">Soporta: <span style="color:var(--cyan)">PDF</span> · <span style="color:var(--green)">Excel</span> · <span style="color:var(--amber)">CSV</span> · hasta 50MB</div>
+        <div class="upload-fname" id="bupload-fname"></div>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>Contexto adicional (opcional)</label>
+      <textarea id="ar-context" rows="2" style="resize:vertical" placeholder="Sector, comparaciones, contexto relevante..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" id="bbtn-ar" onclick="bAnalyzeAR()">⚡ ANALIZAR BALANCE</button>
+      <button class="btn-secondary" onclick="bClearAR()">Limpiar</button>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:8px">// Funciones adicionales</div>
+  <div class="feat-grid">
+    <div class="feat-card on" id="bf-ratios" onclick="bToggleFeat('ratios')"><span class="feat-icon">📊</span><div class="feat-title">Ratios Financieros</div><div class="feat-desc">Liquidez, solvencia, rentabilidad</div><div class="feat-tog"></div></div>
+    <div class="feat-card on" id="bf-risks"  onclick="bToggleFeat('risks')"><span class="feat-icon">⚠️</span><div class="feat-title">Riesgos & Oportunidades</div><div class="feat-desc">Alertas automáticas</div><div class="feat-tog"></div></div>
+    <div class="feat-card on" id="bf-compare" onclick="bToggleFeat('compare')"><span class="feat-icon">📈</span><div class="feat-title">Evolución Histórica</div><div class="feat-desc">Tendencias por período</div><div class="feat-tog"></div></div>
+    <div class="feat-card" id="bf-dcf"    onclick="bToggleFeat('dcf')"><span class="feat-icon">💰</span><div class="feat-title">Valuación DCF</div><div class="feat-desc">Valor intrínseco estimado</div><div class="feat-tog"></div></div>
+    <div class="feat-card" id="bf-altman" onclick="bToggleFeat('altman')"><span class="feat-icon">🔬</span><div class="feat-title">Altman Z-Score</div><div class="feat-desc">Probabilidad de quiebra</div><div class="feat-tog"></div></div>
+    <div class="feat-card" id="bf-sector" onclick="bToggleFeat('sector')"><span class="feat-icon">🏭</span><div class="feat-title">Benchmark Sectorial</div><div class="feat-desc">Vs promedios del sector</div><div class="feat-tog"></div></div>
+    <div class="feat-card" id="bf-sentiment" onclick="bToggleFeat('sentiment')"><span class="feat-icon">📰</span><div class="feat-title">Contexto de Mercado</div><div class="feat-desc">Noticias y macro</div><div class="feat-tog"></div></div>
+    <div class="feat-card" id="bf-export" onclick="bExport()"><span class="feat-icon">📤</span><div class="feat-title">Exportar JSON</div><div class="feat-desc">Descargá el análisis</div><div class="feat-tog" style="display:none"></div></div>
+  </div>
+
+  <div class="loading-wrap" id="b-loading">
+    <div class="loading-track"><div class="loading-fill" id="b-loading-fill"></div></div>
+    <div class="loading-steps" id="b-loading-steps"></div>
+  </div>
+  <div class="error-box" id="b-error"></div>
+
+  <div class="results-section" id="b-results">
+    <div class="results-header">
+      <div>
+        <div style="font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:4px">// Análisis completado</div>
+        <div class="results-title" id="b-res-title">—</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" onclick="bExport()">📤 Exportar</button>
+        <button class="btn-secondary" onclick="bClearResults()">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="score-grid" id="b-score-grid" style="display:none">
+      <div class="score-card"><div class="score-label">Calificación</div><div class="score-val score-B" id="b-score-val">—</div><div class="score-sub" id="b-score-sub"></div></div>
+      <div class="kpi-grid" id="b-kpi-grid"></div>
+    </div>
+    <div class="an-grid" id="b-an-blocks"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════
+     CHARTS
+════════════════════════════════════ -->
+<div class="page" id="page-charts">
+<div class="module-page">
+  <div class="module-header">
+    <div>
+      <div class="module-breadcrumb" onclick="showPage('home')">← EQUITYKS</div>
+      <div class="module-title">Chart <span>Terminal</span></div>
+    </div>
+  </div>
+
+  <div class="chart-controls">
+    <div class="field" style="max-width:200px">
+      <label>Ticker</label>
+      <input type="text" id="chart-ticker" placeholder="Ej: AAPL, MELI, VIST" value="AAPL">
+    </div>
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase;margin-bottom:7px">Intervalo</div>
+      <div class="interval-btns">
+        <div class="ibtn" onclick="setInterval2('1d')" data-int="1d">1D</div>
+        <div class="ibtn active" onclick="setInterval2('1wk')" data-int="1wk">1S</div>
+        <div class="ibtn" onclick="setInterval2('1mo')" data-int="1mo">1M</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:10px;letter-spacing:.15em;color:var(--dim);text-transform:uppercase;margin-bottom:7px">Rango</div>
+      <div class="interval-btns">
+        <div class="ibtn" onclick="setRange('3mo')" data-rng="3mo">3M</div>
+        <div class="ibtn" onclick="setRange('6mo')" data-rng="6mo">6M</div>
+        <div class="ibtn active" onclick="setRange('1y')" data-rng="1y">1A</div>
+        <div class="ibtn" onclick="setRange('2y')" data-rng="2y">2A</div>
+        <div class="ibtn" onclick="setRange('5y')" data-rng="5y">5A</div>
+        <div class="ibtn" onclick="setRange('10y')" data-rng="10y">10A</div>
+        <div class="ibtn" onclick="setRange('max')" data-rng="max">MAX</div>
+      </div>
+    </div>
+    <div class="field" style="max-width:260px">
+      <label>Claude API Key (para análisis IA)</label>
+      <input type="password" id="chart-claude-key" placeholder="sk-ant-..." autocomplete="off">
+    </div>
+    <button class="btn-primary" onclick="loadChart()">⚡ CARGAR</button>
+  </div>
+
+  <div class="chart-layout">
+    <div class="chart-main">
+      <div id="price-chart"></div>
+      <div id="volume-chart"></div>
+      <div id="rsi-chart" class="indicator-chart" style="display:none"></div>
+      <div id="macd-chart" class="indicator-chart" style="display:none"></div>
+    </div>
+    <div class="indicators-panel">
+      <div class="indicator-toggles">
+        <div class="ind-toggle-title">// Indicadores</div>
+        <div class="ind-toggle" onclick="toggleIndicator('sma200')">
+          <div style="display:flex;align-items:center;gap:8px"><div class="ind-dot" style="background:#f59e0b"></div><div class="ind-name">SMA 200</div></div>
+          <div class="ind-chk on" id="ichk-sma200"></div>
+        </div>
+        <div class="ind-toggle" onclick="toggleIndicator('sma50')">
+          <div style="display:flex;align-items:center;gap:8px"><div class="ind-dot" style="background:#06b6d4"></div><div class="ind-name">SMA 50</div></div>
+          <div class="ind-chk on" id="ichk-sma50"></div>
+        </div>
+        <div class="ind-toggle" onclick="toggleIndicator('ema21')">
+          <div style="display:flex;align-items:center;gap:8px"><div class="ind-dot" style="background:#7c3aed"></div><div class="ind-name">EMA 21</div></div>
+          <div class="ind-chk on" id="ichk-ema21"></div>
+        </div>
+        <div class="ind-toggle" onclick="toggleIndicator('bb')">
+          <div style="display:flex;align-items:center;gap:8px"><div class="ind-dot" style="background:#475569"></div><div class="ind-name">Bollinger Bands</div></div>
+          <div class="ind-chk on" id="ichk-bb"></div>
+        </div>
+        <div class="ind-toggle" onclick="toggleIndicator('volume')">
+          <div style="display:flex;align-items:center;gap:8px"><div class="ind-dot" style="background:#334155"></div><div class="ind-name">Volumen</div></div>
+          <div class="ind-chk on" id="ichk-volume"></div>
+        </div>
+        <div class="ind-toggle" onclick="toggleIndicator('rsi')">
+          <div style="display:flex;align-items:center;gap:8px"><div class="ind-dot" style="background:#ef4444"></div><div class="ind-name">RSI (14)</div></div>
+          <div class="ind-chk" id="ichk-rsi"></div>
+        </div>
+        <div class="ind-toggle" onclick="toggleIndicator('macd')">
+          <div style="display:flex;align-items:center;gap:8px"><div class="ind-dot" style="background:#00c853"></div><div class="ind-name">MACD</div></div>
+          <div class="ind-chk" id="ichk-macd"></div>
+        </div>
+      </div>
+
+      <div class="chart-info">
+        <div class="section-label">// Info del precio</div>
+        <div class="ohlcv">
+          <div class="ohlcv-item"><span class="ohlcv-label">O </span><span class="ohlcv-val" id="oi-o">—</span></div>
+          <div class="ohlcv-item"><span class="ohlcv-label">H </span><span class="ohlcv-val" id="oi-h">—</span></div>
+          <div class="ohlcv-item"><span class="ohlcv-label">L </span><span class="ohlcv-val" id="oi-l">—</span></div>
+          <div class="ohlcv-item"><span class="ohlcv-label">C </span><span class="ohlcv-val" id="oi-c">—</span></div>
+        </div>
+      </div>
+
+      <div class="ai-analysis-box">
+        <div class="ai-analysis-title">
+          <span>◈</span> Análisis Técnico IA
+          <button class="btn-secondary" style="padding:3px 10px;font-size:10px;margin-left:auto" onclick="runAIChartAnalysis()">Analizar</button>
+        </div>
+        <div class="ai-analysis-text" id="chart-ai-text">
+          <span class="ai-placeholder">Cargá un gráfico y presioná "Analizar" para obtener un análisis técnico completo basado en todos los indicadores activos.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="error-box" id="chart-error" style="margin-top:12px"></div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════
+     CALENDAR
+════════════════════════════════════ -->
+<div class="page" id="page-calendar">
+<div class="module-page">
+  <div class="module-header">
+    <div>
+      <div class="module-breadcrumb" onclick="showPage('home')">← EQUITYKS</div>
+      <div class="module-title">Calendario <span>Económico</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--dim)">Semana actual · Hora ET</div>
+  </div>
+
+  <div class="cal-layout">
+    <div>
+      <div class="cal-filters">
+        <div class="cal-filter on" onclick="calFilter('all',this)">Todos</div>
+        <div class="cal-filter" onclick="calFilter('high',this)">⚡ Alto impacto</div>
+        <div class="cal-filter" onclick="calFilter('us',this)">🇺🇸 USA</div>
+        <div class="cal-filter" onclick="calFilter('eu',this)">🇪🇺 BCE</div>
+        <div class="cal-filter" onclick="calFilter('earnings',this)">📊 Earnings</div>
+      </div>
+      <div class="cal-timeline" id="cal-timeline"></div>
+    </div>
+    <div>
+      <div class="section-label">// Próximos Earnings</div>
+      <div class="earnings-list" id="earnings-list"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════
+     SECTORS
+════════════════════════════════════ -->
+<div class="page" id="page-sectors">
+<div class="module-page">
+  <div class="module-header">
+    <div>
+      <div class="module-breadcrumb" onclick="showPage('home')">← EQUITYKS</div>
+      <div class="module-title">Sector <span>Dashboard</span></div>
+    </div>
+  </div>
+
+  <div class="sector-tabs" id="sector-tabs"></div>
+
+  <div class="sector-layout">
+    <div>
+      <div id="sector-etf-card"></div>
+      <div class="stocks-table">
+        <div class="stocks-thead">
+          <span>#</span><span>Ticker / Empresa</span><span>Precio</span><span>1 Mes</span><span>1 Año</span><span>Info</span>
+        </div>
+        <div id="stocks-list"></div>
+      </div>
+    </div>
+    <div class="news-panel">
+      <div class="section-label">// Noticias del Sector</div>
+      <div id="sector-news"><div class="news-loading">Seleccioná un sector para ver noticias</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════
+  JAVASCRIPT
+════════════════════════ -->
+<script>
+// ══════════════════════════════════════════════════════════
+// FETCH via Vercel proxy backend — no CORS issues
+// ══════════════════════════════════════════════════════════
+async function fetchYahoo(yahooUrl, timeoutMs = 12000) {
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(yahooUrl)}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(proxyUrl, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) throw new Error('Proxy error: ' + r.status);
+    const contentType = r.headers.get('content-type') || '';
+    if (contentType.includes('json')) return await r.json();
+    return await r.text();
+  } catch(e) {
+    clearTimeout(t);
+    throw e;
+  }
+}
+
+// For RSS feeds (returns text/xml)
+async function fetchRSS(rssUrl, timeoutMs = 10000) {
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(rssUrl)}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(proxyUrl, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) throw new Error('RSS proxy error: ' + r.status);
+    return await r.text();
+  } catch(e) {
+    clearTimeout(t);
+    throw e;
+  }
+}
+
+
+// ══════════════════════════════════════════
+// NAV & PAGE ROUTING
+// ══════════════════════════════════════════
+let currentPage = 'home';
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const links = document.querySelectorAll('.nav-link');
+  const map = { home:0, balance:1, charts:2, calendar:3, sectors:4 };
+  if (map[id] !== undefined) links[map[id]].classList.add('active');
+  currentPage = id;
+  window.scrollTo(0, 0);
+  if (id === 'calendar' && !calLoaded) buildCalendar();
+  if (id === 'sectors'  && !secLoaded) buildSectors();
+  if (id === 'charts'   && !chartLoaded) initCharts();
+}
+
+function goHome() { showPage('home'); }
+
+// ══════════════════════════════════════════
+// HERO TICKER
+// ══════════════════════════════════════════
+const heroTickers = ['SPY','QQQ','AAPL','MELI','VIST','BTC-USD'];
+let tickerLoaded = 0;
+async function loadHeroTicker() {
+  for (const sym of heroTickers) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1h&range=2d`;
+      const data = await fetchYahoo(url);
+      const q = data.chart.result[0];
+      const closes = q.indicators.quote[0].close.filter(v => v != null);
+      const timestamps = q.timestamp;
+      if (closes.length < 2) continue;
+      const last = closes[closes.length - 1];
+      const prev = closes[closes.length - 2];
+      const chgPct = ((last - prev) / prev * 100);
+      const priceEl = document.getElementById('t-' + sym);
+      const chgEl   = document.getElementById('tc-' + sym);
+      const itemEl  = document.getElementById('ti-' + sym);
+      if (priceEl) priceEl.textContent = last < 10 ? last.toFixed(2) : last < 1000 ? last.toFixed(1) : last.toFixed(0);
+      if (chgEl) {
+        const sign = chgPct >= 0 ? '+' : '';
+        chgEl.textContent = sign + chgPct.toFixed(2) + '%';
+        chgEl.className = 'ticker-chg ' + (chgPct >= 0 ? 'up' : 'dn');
+      }
+      if (itemEl) itemEl.style.display = 'flex';
+      tickerLoaded++;
+      if (tickerLoaded === 1) {
+        document.getElementById('hero-ticker').style.display = 'flex';
+        const ts = document.getElementById('ticker-ts');
+        if (ts) {
+          const lastTs = timestamps[timestamps.length-1];
+          const d = new Date(lastTs*1000);
+          ts.textContent = 'Actualizado ' + d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+        }
+      }
+    } catch(e) { /* ticker failed, skip silently */ }
+  }
+}
+loadHeroTicker();
+
+// ══════════════════════════════════════════
+// BALANCE ANALYZER
+// ══════════════════════════════════════════
+let bMode = 'usa';
+let bFeatures = new Set(['ratios','risks','compare']);
+let bFileData = null, bFileName = null, bFileType = null;
+let bLastData = null;
+
+function bSwitchMode(m) {
+  bMode = m;
+  ['usa','ar'].forEach(x => {
+    document.getElementById('btab-'+x).classList.toggle('active', m===x);
+    document.getElementById('bpanel-'+x).classList.toggle('active', m===x);
+  });
+  bClearResults(); bHideError();
+}
+
+function bToggleFeat(id) {
+  if (id === 'export') { bExport(); return; }
+  const card = document.getElementById('bf-'+id);
+  if (bFeatures.has(id)) { bFeatures.delete(id); card.classList.remove('on'); }
+  else { bFeatures.add(id); card.classList.add('on'); }
+}
+
+// Upload
+function bHandleFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  bFileName = file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const fnEl = document.getElementById('bupload-fname');
+  const icEl = document.getElementById('bupload-icon');
+  if (ext === 'pdf') { bFileType = 'pdf'; icEl.textContent = '📄'; fnEl.style.color = 'var(--cyan)'; }
+  else if (['xlsx','xls'].includes(ext)) { bFileType = 'excel'; icEl.textContent = '📊'; fnEl.style.color = 'var(--green)'; }
+  else { bFileType = 'csv'; icEl.textContent = '📋'; fnEl.style.color = 'var(--amber)'; }
+  fnEl.textContent = '✓ ' + file.name; fnEl.style.display = 'block';
+  const reader = new FileReader();
+  if (bFileType === 'pdf') {
+    reader.onload = ev => { bFileData = ev.target.result.split(',')[1]; };
+    reader.readAsDataURL(file);
+  } else if (bFileType === 'csv') {
+    reader.onload = ev => { bFileData = ev.target.result; };
+    reader.readAsText(file);
+  } else {
+    reader.onload = ev => {
+      try {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type:'array' });
+        let all = '';
+        wb.SheetNames.forEach(sh => {
+          const csv = XLSX.utils.sheet_to_csv(wb.Sheets[sh]);
+          if (csv.trim().length > 5) all += `\n\n=== HOJA: ${sh} ===\n${csv}`;
+        });
+        bFileData = all;
+        fnEl.textContent = '✓ ' + file.name + ' (' + wb.SheetNames.length + ' hojas)';
+      } catch(err) { fnEl.textContent = '⚠ Error: ' + err.message; bFileData = null; }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+// Drag & drop
+const bZone = document.getElementById('bupload-zone');
+bZone.addEventListener('dragover', e => { e.preventDefault(); bZone.classList.add('drag'); });
+bZone.addEventListener('dragleave', () => bZone.classList.remove('drag'));
+bZone.addEventListener('drop', e => {
+  e.preventDefault(); bZone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) { document.getElementById('ar-file').files = e.dataTransfer.files; bHandleFile({ target: { files: e.dataTransfer.files } }); }
+});
+
+function bClearAR() {
+  document.getElementById('ar-file').value = '';
+  document.getElementById('ar-company').value = '';
+  document.getElementById('ar-period').value = '';
+  document.getElementById('ar-context').value = '';
+  document.getElementById('bupload-fname').style.display = 'none';
+  document.getElementById('bupload-icon').textContent = '📄';
+  bFileData = null; bFileName = null; bFileType = null;
+  bClearResults();
+}
+
+// Loading
+async function bRunLoading(steps) {
+  const wrap = document.getElementById('b-loading');
+  const fill = document.getElementById('b-loading-fill');
+  const stEl = document.getElementById('b-loading-steps');
+  wrap.classList.add('show'); fill.style.width = '0%';
+  stEl.innerHTML = steps.map((s,i) => `<div class="lstep" id="bls-${i}">· ${s}</div>`).join('');
+  for (let i = 0; i < steps.length; i++) {
+    const el = document.getElementById('bls-'+i);
+    el.classList.add('act');
+    el.innerHTML = `<span class="spin">◌</span> ${steps[i]}`;
+    fill.style.width = ((i+1)/steps.length*100)+'%';
+    await sleep(600 + Math.random()*300);
+    el.classList.remove('act'); el.classList.add('done');
+    el.innerHTML = `✓ ${steps[i]}`;
+  }
+}
+function bHideLoading() { document.getElementById('b-loading').classList.remove('show'); }
+function bShowError(m) { const el = document.getElementById('b-error'); el.textContent = '⚠ '+m; el.classList.add('show'); }
+function bHideError() { document.getElementById('b-error').classList.remove('show'); }
+function sleep(ms) { return new Promise(r => setTimeout(r,ms)); }
+
+// Analyze USA
+async function bAnalyzeUSA() {
+  bHideError(); bClearResults();
+  const ticker = document.getElementById('usa-ticker').value.trim().toUpperCase();
+  const period = document.getElementById('usa-period').value;
+  const limit  = document.getElementById('usa-limit').value;
+  const apiKey = document.getElementById('usa-apikey').value.trim();
+  if (!ticker) return bShowError('Ingresá al menos un ticker.');
+  if (!apiKey)  return bShowError('Necesitás una API Key de FMP.');
+  const btn = document.getElementById('bbtn-usa'); btn.disabled = true;
+  const steps = ['Conectando con FMP API','Descargando estados financieros','Calculando ratios','Analizando con IA'];
+  if (bFeatures.has('sector')) steps.push('Benchmarks sectoriales');
+  if (bFeatures.has('dcf'))    steps.push('Valuación DCF');
+  await bRunLoading(steps);
+  try {
+    const [balRes,incRes,cfRes,profRes] = await Promise.all([
+      fetch(`https://financialmodelingprep.com/api/v3/balance-sheet-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
+      fetch(`https://financialmodelingprep.com/api/v3/income-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
+      fetch(`https://financialmodelingprep.com/api/v3/cash-flow-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
+      fetch(`https://financialmodelingprep.com/api/v3/profile/${ticker}?apikey=${apiKey}`)
+    ]);
+    const [bal,inc,cf,prof] = await Promise.all([balRes.json(),incRes.json(),cfRes.json(),profRes.json()]);
+    if (!Array.isArray(bal) || bal.length===0) { bHideLoading(); btn.disabled=false; return bShowError('No se encontraron datos para "'+ticker+'".'); }
+    if (bal?.['Error Message']) { bHideLoading(); btn.disabled=false; return bShowError('API Key inválida.'); }
+    const name = prof?.[0]?.companyName || ticker;
+    const sector = prof?.[0]?.sector || 'N/A';
+    const fmtN = v => v!=null ? (v/1e6).toFixed(1)+'M' : 'N/A';
+    const b0=bal[0]||{}, i0=inc[0]||{}, cf0=cf[0]||{};
+    let ds = `EMPRESA: ${name} (${ticker})\nSECTOR: ${sector}\nPRECIO: $${prof?.[0]?.price||'N/A'} | MKTCAP: ${fmtN(prof?.[0]?.mktCap)}\n\nBALANCE (${b0.date||'N/A'}):\nActivos: ${fmtN(b0.totalAssets)} | Pasivos: ${fmtN(b0.totalLiabilities)} | PN: ${fmtN(b0.totalStockholdersEquity)}\nCaja: ${fmtN(b0.cashAndCashEquivalents)} | Deuda: ${fmtN(b0.totalDebt)}\n\nRESULTADOS:\nIngresos: ${fmtN(i0.revenue)} | EBITDA: ${fmtN(i0.ebitda)} | Neto: ${fmtN(i0.netIncome)}\nMargen bruto: ${i0.grossProfitRatio?((i0.grossProfitRatio)*100).toFixed(1)+'%':'N/A'}\n\nFLUJO DE CAJA:\nOperaciones: ${fmtN(cf0.operatingCashFlow)} | FCF: ${fmtN(cf0.freeCashFlow)} | CAPEX: ${fmtN(cf0.capitalExpenditure)}`;
+    if (inc.length>1) { ds += '\n\nTENDENCIA:'; inc.slice(0,4).forEach(p => { ds += `\n${p.date}: Rev ${fmtN(p.revenue)}, Net ${fmtN(p.netIncome)}`; }); }
+    bHideLoading();
+    await bCallAI(bBuildPrompt(ds), `${ticker} — ${name}`);
+  } catch(e) { bHideLoading(); bShowError('Error de conexión: '+e.message); }
+  btn.disabled = false;
+}
+
+// Analyze AR
+async function bAnalyzeAR() {
+  bHideError(); bClearResults();
+  const company = document.getElementById('ar-company').value.trim();
+  const period  = document.getElementById('ar-period').value.trim();
+  const context = document.getElementById('ar-context').value.trim();
+  if (!company)    return bShowError('Ingresá el nombre de la empresa.');
+  if (!bFileData)  return bShowError('Subí el balance (PDF, Excel o CSV).');
+  const btn = document.getElementById('bbtn-ar'); btn.disabled = true;
+  await bRunLoading(['Procesando archivo','Extrayendo datos','Calculando ratios','Analizando con IA']);
+  let ds = `EMPRESA: ${company}\nPERÍODO: ${period||'N/E'}\nCONTEXTO: ${context||'Sin contexto adicional'}\nNORMATIVA: NIIF Argentina / CNV / BYMA`;
+  const prompt = bBuildPrompt(ds);
+  bHideLoading();
+  const title = `${company}${period ? ' — '+period : ''}`;
+  try {
+    let msgContent;
+    if (bFileType === 'pdf') {
+      msgContent = [
+        { type:'document', source:{ type:'base64', media_type:'application/pdf', data:bFileData } },
+        { type:'text', text: prompt }
+      ];
+    } else {
+      msgContent = prompt + `\n\n=== DATOS DEL ARCHIVO: ${bFileName} ===\n${bFileData}`;
+    }
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:4000, messages:[{ role:'user', content:msgContent }] })
+    });
+    if (!res.ok) { const e=await res.json().catch(()=>({})); return bShowError('Error API: '+(e?.error?.message||res.status)); }
+    const data = await res.json();
+    bRenderResults(data.content?.map(c=>c.text||'').join('') || '', title);
+  } catch(e) { bShowError('Error: '+e.message); }
+  btn.disabled = false;
+}
+
+function bBuildPrompt(dataSection) {
+  const fi = [...bFeatures];
+  const ratioInstr = fi.includes('ratios') ? `\nRATIOS: incluir liquidez corriente, ácida, D/E, D/EBITDA, ROE, ROA, márgenes, rotaciones.` : '';
+  const riskInstr  = fi.includes('risks')  ? `\nRIESGOS: lista de riesgos y oportunidades con type risk/opportunity/neutral.` : '';
+  const cmpInstr   = fi.includes('compare')? `\nEVOLUCIÓN: analizar tendencias históricas.` : '';
+  const dcfInstr   = fi.includes('dcf')    ? `\nDCF: estimá rango de valor intrínseco (pesimista/base/optimista).` : '';
+  const altInstr   = fi.includes('altman') ? `\nALTMAN Z: calculá e interpretá el score.` : '';
+  const secInstr   = fi.includes('sector') ? `\nBENCHMARK: comparar vs sector.` : '';
+  const senInstr   = fi.includes('sentiment')? `\nCONTEXTO: comentar noticias y macro relevante.` : '';
+  return `Sos analista financiero senior. Analizá los siguientes datos en español.\n\n${dataSection}\n${ratioInstr}${riskInstr}${cmpInstr}${dcfInstr}${altInstr}${secInstr}${senInstr}\n\nResponde SOLO con JSON válido:\n{"company":"","ticker":"","period":"","score":"A/B+/B/C+/C/D","scoreLabel":"","summary":"","kpis":[{"name":"","value":"","delta":"","direction":"up/down/flat"}],"ratios":${fi.includes('ratios')?'{"key":"val"}':'null'},"strengths":[""],"risks":${fi.includes('risks')?'[{"type":"risk/opportunity/neutral","text":""}]':'null'},"periodComparison":${fi.includes('compare')?'"texto"':'null'},"dcf":${fi.includes('dcf')?'{"low":"","mid":"","high":"","analysis":""}':'null'},"altmanZ":${fi.includes('altman')?'{"score":0,"zone":"safe/grey/distress","interpretation":""}':'null'},"sectorBenchmark":${fi.includes('sector')?'"texto"':'null'},"sentiment":${fi.includes('sentiment')?'"texto"':'null'},"recommendation":""}`;
+}
+
+async function bCallAI(prompt, title) {
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:4000, messages:[{ role:'user', content:prompt }] })
+    });
+    if (!res.ok) { const e=await res.json().catch(()=>({})); return bShowError('Error API: '+(e?.error?.message||res.status)); }
+    const data = await res.json();
+    bRenderResults(data.content?.map(c=>c.text||'').join('') || '', title);
+  } catch(e) { bShowError('Error: '+e.message); }
+}
+
+function bRenderResults(raw, title) {
+  let p;
+  try {
+    const clean = raw.replace(/```json|```/g,'').trim();
+    p = JSON.parse(clean.substring(clean.indexOf('{'), clean.lastIndexOf('}')+1));
+  } catch(e) { return bShowError('Error al parsear respuesta IA.'); }
+  bLastData = p;
+  document.getElementById('b-res-title').innerHTML = `${p.ticker||p.company} — <span>${p.company}</span>`;
+  const sv = document.getElementById('b-score-val');
+  sv.textContent = p.score||'B';
+  sv.className = 'score-val score-' + (p.score?.[0]||'B');
+  document.getElementById('b-score-sub').textContent = p.scoreLabel||'';
+  document.getElementById('b-kpi-grid').innerHTML = (p.kpis||[]).map(k => {
+    const dc = k.direction==='up'?'d-up':k.direction==='down'?'d-dn':'d-neu';
+    const di = k.direction==='up'?'▲':k.direction==='down'?'▼':'→';
+    return `<div class="kpi-card"><div class="kpi-name">${k.name}</div><div class="kpi-val">${k.value}</div>${k.delta?`<div class="kpi-delta ${dc}">${di} ${k.delta}</div>`:''}</div>`;
+  }).join('');
+  document.getElementById('b-score-grid').style.display = 'grid';
+  const blocks = document.getElementById('b-an-blocks'); blocks.innerHTML = '';
+  blocks.innerHTML += `<div class="an-block full"><div class="block-title">📋 Resumen Ejecutivo</div><div class="an-text"><p>${p.summary||''}</p></div></div>`;
+  if (p.strengths?.length) blocks.innerHTML += `<div class="an-block"><div class="block-title">✅ Fortalezas</div><div class="tag-list">${p.strengths.map(s=>`<div class="tag-item opportunity"><span class="tag-icon">+</span>${s}</div>`).join('')}</div></div>`;
+  if (p.risks?.length) blocks.innerHTML += `<div class="an-block"><div class="block-title">⚠️ Riesgos & Oportunidades</div><div class="tag-list">${p.risks.map(r=>`<div class="tag-item ${r.type}"><span class="tag-icon">${r.type==='risk'?'⚠':r.type==='opportunity'?'◉':'→'}</span>${r.text}</div>`).join('')}</div></div>`;
+  if (p.ratios) blocks.innerHTML += `<div class="an-block"><div class="block-title">📊 Ratios Financieros</div><table class="ratio-table">${Object.entries(p.ratios).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table></div>`;
+  if (p.periodComparison) blocks.innerHTML += `<div class="an-block"><div class="block-title">📈 Evolución Histórica</div><div class="an-text"><p>${p.periodComparison}</p></div></div>`;
+  if (p.dcf) blocks.innerHTML += `<div class="an-block"><div class="block-title">💰 Valuación DCF</div><div style="display:flex;gap:10px;margin-bottom:10px"><div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--red);margin-bottom:3px">PESIMISTA</div><div style="font-family:'Bebas Neue';font-size:20px;color:var(--red)">${p.dcf.low}</div></div><div style="flex:1;background:var(--bg);border:1px solid rgba(0,200,83,.3);border-radius:3px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--green);margin-bottom:3px">BASE</div><div style="font-family:'Bebas Neue';font-size:20px;color:var(--green)">${p.dcf.mid}</div></div><div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">OPTIMISTA</div><div style="font-family:'Bebas Neue';font-size:20px;color:var(--white)">${p.dcf.high}</div></div></div><div class="an-text"><p>${p.dcf.analysis}</p></div></div>`;
+  if (p.altmanZ) { const zc = p.altmanZ.zone==='safe'?'var(--green)':p.altmanZ.zone==='distress'?'var(--red)':'var(--amber)'; const zl = p.altmanZ.zone==='safe'?'ZONA SEGURA':p.altmanZ.zone==='distress'?'ZONA QUIEBRA':'ZONA GRIS'; blocks.innerHTML += `<div class="an-block"><div class="block-title">🔬 Altman Z-Score</div><div style="display:flex;align-items:center;gap:16px;margin-bottom:10px"><div style="font-family:'Bebas Neue';font-size:48px;color:${zc};line-height:1">${p.altmanZ.score}</div><div><div style="font-size:11px;font-weight:600;color:${zc};letter-spacing:.12em">${zl}</div><div style="font-size:10px;color:var(--dim);margin-top:3px">Z>2.9: Seguro · 1.8-2.9: Gris · <1.8: Riesgo</div></div></div><div class="an-text"><p>${p.altmanZ.interpretation}</p></div></div>`; }
+  if (p.sectorBenchmark) blocks.innerHTML += `<div class="an-block"><div class="block-title">🏭 Benchmark Sectorial</div><div class="an-text"><p>${p.sectorBenchmark}</p></div></div>`;
+  if (p.sentiment) blocks.innerHTML += `<div class="an-block"><div class="block-title">📰 Contexto de Mercado</div><div class="an-text"><p>${p.sentiment}</p></div></div>`;
+  if (p.recommendation) blocks.innerHTML += `<div class="an-block full"><div class="block-title">🎯 Conclusión</div><div class="an-text"><p>${p.recommendation}</p></div></div>`;
+  document.getElementById('b-results').classList.add('show');
+  document.getElementById('b-results').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function bClearResults() {
+  document.getElementById('b-results').classList.remove('show');
+  document.getElementById('b-an-blocks').innerHTML = '';
+  document.getElementById('b-kpi-grid').innerHTML = '';
+  document.getElementById('b-score-grid').style.display = 'none';
+  bLastData = null;
+}
+
+function bExport() {
+  if (!bLastData) return;
+  const blob = new Blob([JSON.stringify(bLastData,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `equityks_balance_${(bLastData.ticker||bLastData.company||'report').toLowerCase()}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+// ══════════════════════════════════════════
+// CHARTS MODULE
+// ══════════════════════════════════════════
+let chartLoaded = false;
+let priceChart, volChart, rsiChart, macdChart;
+let priceSeries, volSeries, sma200Series, sma50Series, ema21Series;
+let bbUpperSeries, bbLowerSeries, bbMiddleSeries;
+let rsiSeries, macdLineSeries, macdSignalSeries, macdHistSeries;
+let activeIndicators = new Set(['sma200','sma50','ema21','bb','volume']);
+let chartInterval = '1wk', chartRange = '1y';
+let rawOHLCV = [];
+
+function initCharts() {
+  chartLoaded = true;
+  const chartOpts = {
+    layout: { background:{ color:'#0c0f18' }, textColor:'#475569' },
+    grid: { vertLines:{ color:'#1a2035' }, horzLines:{ color:'#1a2035' } },
+    crosshair: { mode: 1 },
+    rightPriceScale: { borderColor:'#1a2035' },
+    timeScale: { borderColor:'#1a2035', timeVisible:true },
+    handleScroll: true, handleScale: true,
+  };
+  priceChart = LightweightCharts.createChart(document.getElementById('price-chart'), {...chartOpts, height:420});
+  volChart   = LightweightCharts.createChart(document.getElementById('volume-chart'), {...chartOpts, height:110});
+  rsiChart   = LightweightCharts.createChart(document.getElementById('rsi-chart'),  {...chartOpts, height:120});
+  macdChart  = LightweightCharts.createChart(document.getElementById('macd-chart'), {...chartOpts, height:120});
+
+  priceSeries = priceChart.addCandlestickSeries({ upColor:'#00c853', downColor:'#ef4444', borderUpColor:'#00c853', borderDownColor:'#ef4444', wickUpColor:'#00c853', wickDownColor:'#ef4444' });
+  volSeries   = volChart.addHistogramSeries({ priceFormat:{type:'volume'}, color:'#334155' });
+  sma200Series = priceChart.addLineSeries({ color:'#f59e0b', lineWidth:1, title:'SMA200' });
+  sma50Series  = priceChart.addLineSeries({ color:'#06b6d4', lineWidth:1, title:'SMA50' });
+  ema21Series  = priceChart.addLineSeries({ color:'#7c3aed', lineWidth:1, title:'EMA21' });
+  bbUpperSeries  = priceChart.addLineSeries({ color:'rgba(71,85,105,0.6)', lineWidth:1, lineStyle:2 });
+  bbLowerSeries  = priceChart.addLineSeries({ color:'rgba(71,85,105,0.6)', lineWidth:1, lineStyle:2 });
+  bbMiddleSeries = priceChart.addLineSeries({ color:'rgba(71,85,105,0.4)', lineWidth:1, lineStyle:2 });
+  rsiSeries   = rsiChart.addLineSeries({ color:'#ef4444', lineWidth:1, title:'RSI' });
+  macdLineSeries   = macdChart.addLineSeries({ color:'#00c853', lineWidth:1, title:'MACD' });
+  macdSignalSeries = macdChart.addLineSeries({ color:'#f59e0b', lineWidth:1, title:'Signal' });
+  macdHistSeries   = macdChart.addHistogramSeries({ color:'#334155', title:'Hist' });
+
+  priceChart.subscribeCrosshairMove(p => {
+    if (p.seriesData.has(priceSeries)) {
+      const d = p.seriesData.get(priceSeries);
+      if (d) {
+        document.getElementById('oi-o').textContent = d.open?.toFixed(2)||'—';
+        document.getElementById('oi-h').textContent = d.high?.toFixed(2)||'—';
+        document.getElementById('oi-l').textContent = d.low?.toFixed(2)||'—';
+        document.getElementById('oi-c').textContent = d.close?.toFixed(2)||'—';
+      }
+    }
+  });
+
+  loadChart();
+}
+
+function setInterval2(v) {
+  chartInterval = v;
+  document.querySelectorAll('[data-int]').forEach(b => b.classList.toggle('active', b.dataset.int===v));
+}
+function setRange(v) {
+  chartRange = v;
+  document.querySelectorAll('[data-rng]').forEach(b => b.classList.toggle('active', b.dataset.rng===v));
+  // Auto-adjust interval for long ranges
+  if (v === '5y' || v === '10y' || v === 'max') {
+    chartInterval = '1mo';
+    document.querySelectorAll('[data-int]').forEach(b => b.classList.toggle('active', b.dataset.int==='1mo'));
+  } else if (v === '2y') {
+    chartInterval = '1wk';
+    document.querySelectorAll('[data-int]').forEach(b => b.classList.toggle('active', b.dataset.int==='1wk'));
+  }
+}
+
+function toggleIndicator(id) {
+  const chk = document.getElementById('ichk-'+id);
+  if (activeIndicators.has(id)) { activeIndicators.delete(id); chk.classList.remove('on'); }
+  else { activeIndicators.add(id); chk.classList.add('on'); }
+  applyIndicatorVisibility();
+}
+
+function applyIndicatorVisibility() {
+  if (!priceChart) return;
+  sma200Series.applyOptions({ visible: activeIndicators.has('sma200') });
+  sma50Series.applyOptions({ visible: activeIndicators.has('sma50') });
+  ema21Series.applyOptions({ visible: activeIndicators.has('ema21') });
+  bbUpperSeries.applyOptions({ visible: activeIndicators.has('bb') });
+  bbLowerSeries.applyOptions({ visible: activeIndicators.has('bb') });
+  bbMiddleSeries.applyOptions({ visible: activeIndicators.has('bb') });
+  document.getElementById('volume-chart').style.display = activeIndicators.has('volume') ? 'block' : 'none';
+  const rsiEl  = document.getElementById('rsi-chart');
+  const macdEl = document.getElementById('macd-chart');
+  rsiEl.style.display  = activeIndicators.has('rsi')  ? 'block' : 'none';
+  macdEl.style.display = activeIndicators.has('macd') ? 'block' : 'none';
+  if (activeIndicators.has('rsi'))  rsiChart.timeScale().fitContent();
+  if (activeIndicators.has('macd')) macdChart.timeScale().fitContent();
+}
+
+async function loadChart() {
+  if (!chartLoaded) return;
+  const ticker = document.getElementById('chart-ticker').value.trim().toUpperCase();
+  if (!ticker) return;
+  document.getElementById('chart-error').classList.remove('show');
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${chartInterval}&range=${chartRange}`;
+    const data = await fetchYahoo(url);
+    if (!data.chart?.result?.[0]) throw new Error('Sin datos para ' + ticker);
+    const r = data.chart.result[0];
+    const timestamps = r.timestamp;
+    const q = r.indicators.quote[0];
+    rawOHLCV = timestamps.map((t,i) => ({
+      time: t,
+      open:  q.open[i]  || q.close[i],
+      high:  q.high[i]  || q.close[i],
+      low:   q.low[i]   || q.close[i],
+      close: q.close[i] || 0,
+      volume:q.volume[i]|| 0
+    })).filter(d => d.close > 0);
+    const candles = rawOHLCV.map(d => ({ time:d.time, open:d.open, high:d.high, low:d.low, close:d.close }));
+    const volumes = rawOHLCV.map(d => ({ time:d.time, value:d.volume, color: d.close>=d.open?'rgba(0,200,83,0.4)':'rgba(239,68,68,0.4)' }));
+    priceSeries.setData(candles);
+    volSeries.setData(volumes);
+    const closes = rawOHLCV.map(d=>d.close);
+    const times  = rawOHLCV.map(d=>d.time);
+    sma200Series.setData(calcSMA(times,closes,200));
+    sma50Series.setData(calcSMA(times,closes,50));
+    ema21Series.setData(calcEMA(times,closes,21));
+    const {upper,middle,lower} = calcBB(times,closes,20,2);
+    bbUpperSeries.setData(upper); bbMiddleSeries.setData(middle); bbLowerSeries.setData(lower);
+    rsiSeries.setData(calcRSI(times,closes,14));
+    const {macdLine,signalLine,histogram} = calcMACD(times,closes);
+    macdLineSeries.setData(macdLine); macdSignalSeries.setData(signalLine); macdHistSeries.setData(histogram);
+    priceChart.timeScale().fitContent();
+    volChart.timeScale().fitContent();
+    applyIndicatorVisibility();
+    // sync timescales
+    priceChart.timeScale().subscribeVisibleTimeRangeChange(range => {
+      if (range) { volChart.timeScale().setVisibleRange(range); rsiChart.timeScale().setVisibleRange(range); macdChart.timeScale().setVisibleRange(range); }
+    });
+  } catch(e) {
+    document.getElementById('chart-error').textContent = '⚠ Error cargando datos: ' + e.message;
+    document.getElementById('chart-error').classList.add('show');
+  }
+}
+
+// Indicator math
+function calcSMA(times, closes, period) {
+  const out = [];
+  for (let i = period-1; i < closes.length; i++) {
+    const sum = closes.slice(i-period+1, i+1).reduce((a,b)=>a+b,0);
+    out.push({ time: times[i], value: sum/period });
+  }
+  return out;
+}
+function calcEMA(times, closes, period) {
+  const k = 2/(period+1); const out = [];
+  let ema = closes[0];
+  for (let i = 0; i < closes.length; i++) {
+    ema = closes[i]*k + ema*(1-k);
+    if (i >= period-1) out.push({ time:times[i], value:ema });
+  }
+  return out;
+}
+function calcBB(times, closes, period, std) {
+  const upper=[], middle=[], lower=[];
+  for (let i=period-1; i<closes.length; i++) {
+    const sl = closes.slice(i-period+1,i+1);
+    const mean = sl.reduce((a,b)=>a+b,0)/period;
+    const variance = sl.reduce((a,b)=>a+(b-mean)**2,0)/period;
+    const sd = Math.sqrt(variance);
+    upper.push({time:times[i],value:mean+std*sd});
+    middle.push({time:times[i],value:mean});
+    lower.push({time:times[i],value:mean-std*sd});
+  }
+  return {upper,middle,lower};
+}
+function calcRSI(times, closes, period) {
+  const out = []; let gains=0, losses=0;
+  for (let i=1; i<=period; i++) { const d=closes[i]-closes[i-1]; d>0?gains+=d:losses-=d; }
+  let avgG=gains/period, avgL=losses/period;
+  const rsi0 = 100 - 100/(1+avgG/avgL);
+  out.push({time:times[period],value:rsi0});
+  for (let i=period+1; i<closes.length; i++) {
+    const d=closes[i]-closes[i-1];
+    avgG=(avgG*(period-1)+(d>0?d:0))/period;
+    avgL=(avgL*(period-1)+(d<0?-d:0))/period;
+    out.push({time:times[i],value:100-100/(1+avgG/Math.max(avgL,0.0001))});
+  }
+  return out;
+}
+function calcMACD(times, closes, fast=12, slow=26, signal=9) {
+  const k1=2/(fast+1), k2=2/(slow+1), k3=2/(signal+1);
+  let ema1=closes[0], ema2=closes[0];
+  const macdVals=[]; const macdTimes=[];
+  for (let i=0; i<closes.length; i++) {
+    ema1=closes[i]*k1+ema1*(1-k1); ema2=closes[i]*k2+ema2*(1-k2);
+    if(i>=slow-1){ macdVals.push(ema1-ema2); macdTimes.push(times[i]); }
+  }
+  let sig=macdVals[0];
+  const macdLine=[],signalLine=[],histogram=[];
+  for(let i=0;i<macdVals.length;i++){
+    sig=macdVals[i]*k3+sig*(1-k3);
+    if(i>=signal-1){
+      macdLine.push({time:macdTimes[i],value:macdVals[i]});
+      signalLine.push({time:macdTimes[i],value:sig});
+      const h=macdVals[i]-sig;
+      histogram.push({time:macdTimes[i],value:h,color:h>=0?'rgba(0,200,83,0.6)':'rgba(239,68,68,0.6)'});
+    }
+  }
+  return {macdLine,signalLine,histogram};
+}
+
+async function runAIChartAnalysis() {
+  const ticker = document.getElementById('chart-ticker').value.trim().toUpperCase();
+  const apiKey = document.getElementById('chart-claude-key').value.trim();
+  if (!rawOHLCV.length) { document.getElementById('chart-ai-text').textContent = 'Cargá un gráfico primero.'; return; }
+  const el = document.getElementById('chart-ai-text');
+  el.innerHTML = '<span class="spin">◌</span> Analizando indicadores...';
+  const last = rawOHLCV[rawOHLCV.length-1];
+  const closes = rawOHLCV.map(d=>d.close);
+  const sma200 = calcSMA([], closes, 200);
+  const sma50  = calcSMA([], closes, 50);
+  const rsiArr = calcRSI([], closes, 14);
+  const lastSMA200 = sma200[sma200.length-1]?.value || null;
+  const lastSMA50  = sma50[sma50.length-1]?.value || null;
+  const lastRSI    = rsiArr[rsiArr.length-1]?.value || null;
+  const {upper,lower} = calcBB([],closes,20,2);
+  const bbU = upper[upper.length-1]?.value, bbL = lower[lower.length-1]?.value;
+  const {macdLine,signalLine} = calcMACD([],closes);
+  const lastMACD = macdLine[macdLine.length-1]?.value, lastSig = signalLine[signalLine.length-1]?.value;
+  const aktInd = [...activeIndicators].join(', ');
+  const prompt = `Sos analista técnico experto. Analizá el gráfico de ${ticker} con los siguientes datos de indicadores:\n\nPRECIO ACTUAL: $${last.close.toFixed(2)}\nSMA 200: ${lastSMA200?.toFixed(2)||'N/A'} (precio ${last.close>lastSMA200?'POR ENCIMA':'POR DEBAJO'})\nSMA 50: ${lastSMA50?.toFixed(2)||'N/A'} (precio ${last.close>lastSMA50?'POR ENCIMA':'POR DEBAJO'})\nRSI (14): ${lastRSI?.toFixed(1)||'N/A'} (${lastRSI>70?'SOBRECOMPRADO':lastRSI<30?'SOBREVENDIDO':'NEUTRAL'})\nBollinger Upper: ${bbU?.toFixed(2)||'N/A'} | Lower: ${bbL?.toFixed(2)||'N/A'}\nMACD: ${lastMACD?.toFixed(3)||'N/A'} | Signal: ${lastSig?.toFixed(3)||'N/A'} (${lastMACD>lastSig?'ALCISTA':'BAJISTA'})\nINDICADORES ACTIVOS: ${aktInd}\n\nEscribí un análisis técnico en español de 4-6 oraciones que integre todos estos indicadores, explique la tendencia actual, zonas de soporte/resistencia importantes, y una perspectiva a corto plazo. Sé directo y útil para un trader.`;
+  if (!apiKey) {
+    el.innerHTML = '<span style="color:var(--amber)">⚠ Ingresá tu Claude API Key arriba para activar el análisis IA.</span>';
+    return;
+  }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, messages:[{role:'user',content:prompt}] })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      el.innerHTML = '<span style="color:var(--red)">Error API: ' + (err?.error?.message || res.status) + '</span>';
+      return;
+    }
+    const data = await res.json();
+    el.textContent = data.content?.[0]?.text || 'No se pudo generar el análisis.';
+  } catch(e) { el.innerHTML = '<span style="color:var(--red)">Error: '+e.message+'</span>'; }
+}
+
+// ══════════════════════════════════════════
+// ECONOMIC CALENDAR
+// ══════════════════════════════════════════
+let calLoaded = false;
+let calActiveFilter = 'all';
+
+const calEvents = [
+  // Week of March 3-7 2026 (approx current week)
+  { date:'2026-03-03', time:'10:00', name:'ISM Manufacturing PMI', country:'US', impact:'high', forecast:'50.8', prev:'50.9', actual:null, type:'us' },
+  { date:'2026-03-04', time:'10:00', name:'JOLTS Job Openings', country:'US', impact:'med', forecast:'7.6M', prev:'7.7M', actual:null, type:'us' },
+  { date:'2026-03-05', time:'08:15', name:'ADP Employment Change', country:'US', impact:'high', forecast:'145K', prev:'138K', actual:null, type:'us' },
+  { date:'2026-03-05', time:'14:00', name:'ISM Services PMI', country:'US', impact:'high', forecast:'53.0', prev:'52.8', actual:'53.5', type:'us' },
+  { date:'2026-03-06', time:'08:30', name:'Initial Jobless Claims', country:'US', impact:'med', forecast:'215K', prev:'218K', actual:null, type:'us' },
+  { date:'2026-03-06', time:'20:00', name:'Decisión de Tasas BCE', country:'EU', impact:'high', forecast:'2.65%', prev:'2.90%', actual:null, type:'eu' },
+  { date:'2026-03-07', time:'08:30', name:'Nonfarm Payrolls', country:'US', impact:'high', forecast:'185K', prev:'256K', actual:null, type:'us' },
+  { date:'2026-03-07', time:'08:30', name:'Tasa de Desempleo', country:'US', impact:'high', forecast:'4.1%', prev:'4.1%', actual:null, type:'us' },
+  { date:'2026-03-10', time:'—', name:'CPI (Feb)', country:'US', impact:'high', forecast:'2.9% YoY', prev:'3.0%', actual:null, type:'us' },
+  { date:'2026-03-12', time:'—', name:'PPI (Feb)', country:'US', impact:'med', forecast:'3.1%', prev:'3.3%', actual:null, type:'us' },
+  { date:'2026-03-18', time:'14:00', name:'Decisión de Tasas Fed (FOMC)', country:'US', impact:'high', forecast:'4.25-4.50%', prev:'4.25-4.50%', actual:null, type:'us' },
+  { date:'2026-03-28', time:'08:30', name:'PCE Price Index (Feb)', country:'US', impact:'high', forecast:'2.6%', prev:'2.6%', actual:null, type:'us' },
+];
+
+const earningsData = [
+  { sym:'COST', name:'Costco Wholesale', date:'2026-03-06', when:'AMC', epsEst:'4.12', revsEst:'$63.1B', epsAct:null, revsAct:null },
+  { sym:'ORCL', name:'Oracle Corp', date:'2026-03-10', when:'AMC', epsEst:'1.65', revsEst:'$14.4B', epsAct:null, revsAct:null },
+  { sym:'ADBE', name:'Adobe Inc', date:'2026-03-12', when:'AMC', epsEst:'4.97', revsEst:'$5.8B', epsAct:null, revsAct:null },
+  { sym:'FDX',  name:'FedEx Corp', date:'2026-03-18', when:'AMC', epsEst:'4.65', revsEst:'$22.1B', epsAct:null, revsAct:null },
+  { sym:'NKE',  name:'Nike Inc', date:'2026-03-20', when:'AMC', epsEst:'0.75', revsEst:'$11.5B', epsAct:null, revsAct:null },
+  { sym:'PAYX', name:'Paychex', date:'2026-03-26', when:'BMO', epsEst:'1.25', revsEst:'$1.38B', epsAct:null, revsAct:null },
+  { sym:'VIST', name:'Vista Energy (ARG)', date:'2026-03-28', when:'AMC', epsEst:'2.85', revsEst:'$395M', epsAct:null, revsAct:null },
+  { sym:'MELI', name:'MercadoLibre', date:'2026-04-30', when:'AMC', epsEst:'12.4', revsEst:'$6.2B', epsAct:null, revsAct:null },
+];
+
+function buildCalendar() {
+  calLoaded = true;
+  renderCalTimeline();
+  renderEarnings();
+}
+
+function calFilter(type, el) {
+  calActiveFilter = type;
+  document.querySelectorAll('.cal-filter').forEach(f => f.classList.remove('on'));
+  el.classList.add('on');
+  renderCalTimeline();
+}
+
+function renderCalTimeline() {
+  const filtered = calActiveFilter === 'all' ? calEvents :
+    calActiveFilter === 'high' ? calEvents.filter(e => e.impact === 'high') :
+    calActiveFilter === 'earnings' ? [] :
+    calEvents.filter(e => e.type === calActiveFilter);
+  const grouped = {};
+  filtered.forEach(e => { (grouped[e.date] = grouped[e.date]||[]).push(e); });
+  const days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  let html = '';
+  if (calActiveFilter === 'earnings') {
+    html = earningsData.map(e => renderEarnCard(e)).join('');
+  } else {
+    Object.entries(grouped).sort().forEach(([date, events]) => {
+      const d = new Date(date+'T12:00:00');
+      html += `<div class="cal-day-header">${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}</div>`;
+      events.forEach(e => {
+        const beatClass = e.actual ? (parseFloat(e.actual) > parseFloat(e.forecast) ? 'beat' : 'miss') : '';
+        html += `<div class="cal-event" data-impact="${e.impact}" data-type="${e.type}">
+          <div><div class="cal-time">${e.time}</div><div class="cal-impact impact-${e.impact}">${'<div class="impact-dot"></div>'.repeat(3)}</div></div>
+          <div><div class="cal-event-name">${e.country === 'US' ? '🇺🇸' : '🇪🇺'} ${e.name}</div><div class="cal-event-country">${e.country === 'US' ? 'Estados Unidos' : 'Unión Europea'} · Impacto ${e.impact === 'high' ? 'alto' : e.impact === 'med' ? 'medio' : 'bajo'}</div></div>
+          <div class="cal-values">
+            <div class="cal-val-row"><span class="val-label">Est:</span><span class="val-fore">${e.forecast||'—'}</span></div>
+            <div class="cal-val-row"><span class="val-label">Ant:</span><span class="val-prev">${e.prev||'—'}</span></div>
+            ${e.actual ? `<div class="cal-val-row"><span class="val-label">Real:</span><span class="val-act ${beatClass}">${e.actual} ${beatClass==='beat'?'▲':'▼'}</span></div>` : ''}
+          </div>
+        </div>`;
+      });
+    });
+  }
+  document.getElementById('cal-timeline').innerHTML = html || '<div style="color:var(--dim);padding:20px;text-align:center">No hay eventos para este filtro</div>';
+}
+
+function renderEarnCard(e) {
+  const reported = e.epsAct !== null;
+  const beat = reported && parseFloat(e.epsAct) >= parseFloat(e.epsEst);
+  return `<div class="earn-card">
+    <div class="earn-top">
+      <div><div class="earn-sym">${e.sym}</div><div class="earn-name">${e.name}</div></div>
+      <div class="earn-date"><div>${e.date}</div><div class="earn-date-when">${e.when === 'AMC' ? 'Después del cierre' : 'Antes de la apertura'}</div><div style="margin-top:4px"><span class="${reported ? 'badge-reported' : 'badge-upcoming'} earn-badge">${reported ? '✓ Reportado' : 'Pendiente'}</span></div></div>
+    </div>
+    <div class="earn-estimates">
+      <div class="earn-est"><span class="earn-est-label">EPS Est: </span><span class="earn-est-val">$${e.epsEst}</span>${reported ? `<span class="${beat?'earn-actual':'earn-miss'}"> → $${e.epsAct}</span>` : ''}</div>
+      <div class="earn-est"><span class="earn-est-label">Rev Est: </span><span class="earn-est-val">${e.revsEst}</span>${reported && e.revsAct ? `<span class="earn-actual"> → ${e.revsAct}</span>` : ''}</div>
+    </div>
+  </div>`;
+}
+
+function renderEarnings() {
+  document.getElementById('earnings-list').innerHTML = earningsData.slice(0,6).map(e => renderEarnCard(e)).join('');
+}
+
+// ══════════════════════════════════════════
+// SECTOR DASHBOARD
+// ══════════════════════════════════════════
+let secLoaded = false;
+let activeSector = 0;
+
+const sectors = [
+  {
+    name:'Energía', etf:'XLE', etfName:'Energy Select Sector SPDR', etfDesc:'Empresas de petróleo, gas y servicios energéticos del S&P 500. Sector cíclico muy sensible al precio del WTI/Brent.',
+    mo:'+4.2%', yr:'+18.7%', moPos:true, yrPos:true,
+    stocks:[
+      { sym:'VIST', name:'Vista Energy S.A.',   country:'🇦🇷 ARG', mo:'+12.4', yr:'+68.2', price:'46.20',  info:'O&G · Vaca Muerta', pos:true },
+      { sym:'XOM',  name:'Exxon Mobil Corp',    country:'🇺🇸 USA', mo:'+6.1',  yr:'+22.3', price:'118.45', info:'Supermajor · Div 3.4%', pos:true },
+      { sym:'PBR',  name:'Petrobras ADR',       country:'🇧🇷 BRA', mo:'+5.8',  yr:'+14.1', price:'15.30',  info:'Estatal Brasil · Alto div.', pos:true },
+      { sym:'CVX',  name:'Chevron Corp',        country:'🇺🇸 USA', mo:'+4.2',  yr:'+8.7',  price:'164.80', info:'Supermajor · Permian', pos:true },
+      { sym:'COP',  name:'ConocoPhillips',      country:'🇺🇸 USA', mo:'+3.1',  yr:'+11.2', price:'108.60', info:'E&P independiente', pos:true },
+      { sym:'TTE',  name:'TotalEnergies ADR',   country:'🇫🇷 FRA', mo:'+2.4',  yr:'+6.8',  price:'68.30',  info:'Supermajor europeo', pos:true },
+      { sym:'EOG',  name:'EOG Resources',       country:'🇺🇸 USA', mo:'+2.8',  yr:'+9.4',  price:'135.40', info:'Shale E&P premium', pos:true },
+      { sym:'SLB',  name:'SLB (Schlumberger)',  country:'🇺🇸 USA', mo:'-1.2',  yr:'-4.3',  price:'41.20',  info:'Servicios O&G global', pos:false },
+      { sym:'YPF',  name:'YPF S.A.',            country:'🇦🇷 ARG', mo:'-2.8',  yr:'+32.1', price:'32.10',  info:'Estatal ARG · Vaca Muerta', pos:false },
+    ]
+  },
+  {
+    name:'Tecnología', etf:'XLK', etfName:'Technology Select Sector SPDR', etfDesc:'Semiconductores, software, hardware y servicios cloud del S&P 500. Sector de mayor peso en el índice.',
+    mo:'+3.1%', yr:'+28.4%', moPos:true, yrPos:true,
+    stocks:[
+      { sym:'NVDA', name:'NVIDIA Corporation',  country:'🇺🇸 USA', mo:'+18.2', yr:'+142.3', price:'875.30',  info:'GPUs · IA dominante', pos:true },
+      { sym:'MELI', name:'MercadoLibre',        country:'🇦🇷 ARG', mo:'+4.1',  yr:'+31.2',  price:'2180.40', info:'E-comm LATAM · FinTech', pos:true },
+      { sym:'AAPL', name:'Apple Inc',           country:'🇺🇸 USA', mo:'+5.4',  yr:'+22.1',  price:'228.60',  info:'Mega-cap · Servicios', pos:true },
+      { sym:'MSFT', name:'Microsoft Corp',      country:'🇺🇸 USA', mo:'+4.8',  yr:'+18.7',  price:'415.20',  info:'Azure · AI Copilot', pos:true },
+      { sym:'META', name:'Meta Platforms',      country:'🇺🇸 USA', mo:'+3.2',  yr:'+64.8',  price:'598.70',  info:'Social media · AI', pos:true },
+      { sym:'GOOGL',name:'Alphabet Inc',        country:'🇺🇸 USA', mo:'+1.8',  yr:'+24.3',  price:'178.90',  info:'Search · Cloud · AI', pos:true },
+      { sym:'ASML', name:'ASML Holding ADR',    country:'🇳🇱 NLD', mo:'+2.1',  yr:'+8.4',   price:'748.60',  info:'Litografía EUV · monopolio', pos:true },
+      { sym:'INTC', name:'Intel Corp',          country:'🇺🇸 USA', mo:'-8.4',  yr:'-38.2',  price:'24.60',   info:'Semiconductores · turnaround', pos:false },
+    ]
+  },
+  {
+    name:'Financiero', etf:'XLF', etfName:'Financial Select Sector SPDR', etfDesc:'Bancos, aseguradoras, gestoras de activos y servicios financieros. Sensible a tasas y ciclo económico.',
+    mo:'+2.8%', yr:'+32.1%', moPos:true, yrPos:true,
+    stocks:[
+      { sym:'BRK.B',name:'Berkshire Hathaway',  country:'🇺🇸 USA', mo:'+6.2', yr:'+28.4', price:'462.10', info:'Conglomerado · Buffett', pos:true },
+      { sym:'GGAL', name:'Grupo Galicia ADR',   country:'🇦🇷 ARG', mo:'+5.8', yr:'+82.3', price:'42.30',  info:'Banco líder Argentina', pos:true },
+      { sym:'JPM',  name:'JPMorgan Chase',      country:'🇺🇸 USA', mo:'+4.1', yr:'+38.7', price:'248.60', info:'Mayor banco USA', pos:true },
+      { sym:'BMA',  name:'Banco Macro ADR',     country:'🇦🇷 ARG', mo:'+3.4', yr:'+74.1', price:'24.80',  info:'Banco privado Argentina', pos:true },
+      { sym:'ITUB', name:'Itaú Unibanco ADR',   country:'🇧🇷 BRA', mo:'+3.1', yr:'+18.4', price:'7.20',   info:'Mayor banco Brasil', pos:true },
+      { sym:'HSBC', name:'HSBC Holdings ADR',   country:'🇬🇧 GBR', mo:'+2.4', yr:'+22.1', price:'48.60',  info:'Banco global UK-Asia', pos:true },
+      { sym:'GS',   name:'Goldman Sachs',       country:'🇺🇸 USA', mo:'+2.1', yr:'+42.3', price:'582.40', info:'IB · Trading · Wealth', pos:true },
+      { sym:'C',    name:'Citigroup',           country:'🇺🇸 USA', mo:'-1.2', yr:'+8.3',  price:'78.40',  info:'Banca global · turnaround', pos:false },
+    ]
+  },
+  {
+    name:'Salud', etf:'XLV', etfName:'Health Care Select Sector SPDR', etfDesc:'Farmacéuticas, biotecnológicas, dispositivos médicos y servicios de salud del S&P 500.',
+    mo:'+1.4%', yr:'+8.3%', moPos:true, yrPos:true,
+    stocks:[
+      { sym:'LLY',  name:'Eli Lilly',           country:'🇺🇸 USA', mo:'+8.4', yr:'+42.1', price:'812.30', info:'GLP-1 · diabetes · obesidad', pos:true },
+      { sym:'NVO',  name:'Novo Nordisk ADR',    country:'🇩🇰 DNK', mo:'+6.2', yr:'+28.4', price:'96.40',  info:'Ozempic · Wegovy', pos:true },
+      { sym:'ABBV', name:'AbbVie Inc',          country:'🇺🇸 USA', mo:'+3.8', yr:'+18.2', price:'184.20', info:'Oncología · inmunología', pos:true },
+      { sym:'UNH',  name:'UnitedHealth Group',  country:'🇺🇸 USA', mo:'+2.4', yr:'+12.8', price:'582.40', info:'Mayor aseguradora USA', pos:true },
+      { sym:'JNJ',  name:'Johnson & Johnson',   country:'🇺🇸 USA', mo:'+1.8', yr:'+4.3',  price:'162.80', info:'Pharma diversificada', pos:true },
+      { sym:'MRK',  name:'Merck & Co',          country:'🇺🇸 USA', mo:'-2.1', yr:'-8.4',  price:'98.60',  info:'Keytruda oncología', pos:false },
+      { sym:'PFE',  name:'Pfizer Inc',          country:'🇺🇸 USA', mo:'-4.2', yr:'-18.3', price:'26.40',  info:'Post-COVID normalización', pos:false },
+      { sym:'BMY',  name:'Bristol-Myers',       country:'🇺🇸 USA', mo:'-6.8', yr:'-22.1', price:'48.30',  info:'Pipeline en riesgo', pos:false },
+    ]
+  },
+  {
+    name:'Materiales', etf:'XLB', etfName:'Materials Select Sector SPDR', etfDesc:'Minería, químicos, acero, papel y materiales de construcción. Correlacionado con ciclo global.',
+    mo:'+2.1%', yr:'+12.4%', moPos:true, yrPos:true,
+    stocks:[
+      { sym:'FCX',  name:'Freeport-McMoRan',   country:'🇺🇸 USA', mo:'+8.2', yr:'+28.4', price:'44.80',  info:'Cobre líder mundial', pos:true },
+      { sym:'NEM',  name:'Newmont Corp',        country:'🇺🇸 USA', mo:'+6.4', yr:'+22.1', price:'46.20',  info:'Oro · Mayor minera', pos:true },
+      { sym:'BHP',  name:'BHP Group ADR',       country:'🇦🇺 AUS', mo:'+4.8', yr:'+8.4',  price:'52.30',  info:'Minera global · hierro/cobre', pos:true },
+      { sym:'RIO',  name:'Rio Tinto ADR',       country:'🇬🇧 GBR', mo:'+3.2', yr:'+6.8',  price:'68.40',  info:'Hierro · aluminio · cobre', pos:true },
+      { sym:'LIN',  name:'Linde PLC',           country:'🇩🇪 DEU', mo:'+2.4', yr:'+14.2', price:'468.30', info:'Gases industriales', pos:true },
+      { sym:'VALE', name:'Vale S.A. ADR',       country:'🇧🇷 BRA', mo:'+1.8', yr:'-12.4', price:'9.80',   info:'Hierro · níquel Brasil', pos:true },
+      { sym:'MOS',  name:'The Mosaic Co',       country:'🇺🇸 USA', mo:'-3.2', yr:'-12.1', price:'28.60',  info:'Fertilizantes · presión', pos:false },
+    ]
+  },
+  {
+    name:'Consumo Disc.', etf:'XLY', etfName:'Consumer Discretionary SPDR', etfDesc:'Retail, automotriz, hotelería y bienes no esenciales. Sensible al ciclo y confianza del consumidor.',
+    mo:'-0.8%', yr:'+14.2%', moPos:false, yrPos:true,
+    stocks:[
+      { sym:'AMZN', name:'Amazon.com',          country:'🇺🇸 USA', mo:'+1.2', yr:'+41.6', price:'210.30', info:'E-comm · AWS cloud', pos:true },
+      { sym:'BKNG', name:'Booking Holdings',    country:'🇺🇸 USA', mo:'+4.2', yr:'+32.1', price:'4820.60',info:'Travel · Priceline', pos:true },
+      { sym:'MCD',  name:"McDonald's Corp",     country:'🇺🇸 USA', mo:'+2.8', yr:'+8.4',  price:'298.40', info:'Fast food global', pos:true },
+      { sym:'TSLA', name:'Tesla Inc',           country:'🇺🇸 USA', mo:'-8.4', yr:'+18.2', price:'312.40', info:'EV · robotaxis · política', pos:false },
+      { sym:'NKE',  name:'Nike Inc',            country:'🇺🇸 USA', mo:'-4.8', yr:'-18.4', price:'78.40',  info:'Restructuring · China', pos:false },
+      { sym:'SBUX', name:'Starbucks Corp',      country:'🇺🇸 USA', mo:'-2.1', yr:'-12.4', price:'98.60',  info:'Turnaround Niccol', pos:false },
+    ]
+  },
+  {
+    name:'Utilities', etf:'XLU', etfName:'Utilities Select Sector SPDR', etfDesc:'Empresas de electricidad, gas y agua. Sector defensivo, correlacionado inversamente con tasas de interés.',
+    mo:'+1.8%', yr:'+6.4%', moPos:true, yrPos:true,
+    stocks:[
+      { sym:'NEE',  name:'NextEra Energy',      country:'🇺🇸 USA', mo:'+4.2', yr:'+12.4', price:'74.80',  info:'Energía renovable líder', pos:true },
+      { sym:'SO',   name:'Southern Company',    country:'🇺🇸 USA', mo:'+3.1', yr:'+8.4',  price:'88.30',  info:'Utility sudeste USA', pos:true },
+      { sym:'DUK',  name:'Duke Energy',         country:'🇺🇸 USA', mo:'+2.4', yr:'+6.8',  price:'118.60', info:'Utility diversificada', pos:true },
+      { sym:'AEP',  name:'AEP',                 country:'🇺🇸 USA', mo:'+1.8', yr:'+4.2',  price:'98.40',  info:'Electricidad · transmisión', pos:true },
+      { sym:'EXC',  name:'Exelon Corp',         country:'🇺🇸 USA', mo:'+0.8', yr:'+2.8',  price:'42.30',  info:'Nuclear · distribución', pos:true },
+      { sym:'ED',   name:'Con Edison',          country:'🇺🇸 USA', mo:'-0.4', yr:'-2.1',  price:'96.80',  info:'NYC utility · defensiva', pos:false },
+    ]
+  },
+  {
+    name:'Industrial', etf:'XLI', etfName:'Industrials Select Sector SPDR', etfDesc:'Aeroespacial, defensa, maquinaria, transporte y servicios industriales del S&P 500.',
+    mo:'+2.4%', yr:'+16.8%', moPos:true, yrPos:true,
+    stocks:[
+      { sym:'GE',   name:'GE Aerospace',        country:'🇺🇸 USA', mo:'+8.4', yr:'+42.1', price:'196.40', info:'Motores jet · defensa', pos:true },
+      { sym:'RTX',  name:'RTX Corp',            country:'🇺🇸 USA', mo:'+6.2', yr:'+28.4', price:'128.60', info:'Defensa · Pratt & Whitney', pos:true },
+      { sym:'CAT',  name:'Caterpillar Inc',     country:'🇺🇸 USA', mo:'+4.8', yr:'+22.1', price:'368.40', info:'Maquinaria pesada', pos:true },
+      { sym:'UPS',  name:'United Parcel Service',country:'🇺🇸 USA',mo:'+2.4', yr:'+4.2',  price:'128.30', info:'Logística global', pos:true },
+      { sym:'HON',  name:'Honeywell Intl',      country:'🇺🇸 USA', mo:'+1.8', yr:'+8.4',  price:'224.60', info:'Industrial diversificada', pos:true },
+      { sym:'BA',   name:'Boeing Co',           country:'🇺🇸 USA', mo:'-4.2', yr:'-8.4',  price:'178.40', info:'Aviación · restructuring', pos:false },
+    ]
+  },
+  {
+    name:'Real Estate', etf:'XLRE', etfName:'Real Estate Select Sector SPDR', etfDesc:'REITs de oficinas, comercial, residencial e industrial. Muy sensible a tasas de interés largas.',
+    mo:'-1.2%', yr:'+4.8%', moPos:false, yrPos:true,
+    stocks:[
+      { sym:'PLD',  name:'Prologis Inc',        country:'🇺🇸 USA', mo:'+3.4', yr:'+12.4', price:'124.80', info:'REIT logístico industrial', pos:true },
+      { sym:'AMT',  name:'American Tower',      country:'🇺🇸 USA', mo:'+2.8', yr:'+8.4',  price:'198.60', info:'REIT torres telecom', pos:true },
+      { sym:'EQIX', name:'Equinix Inc',         country:'🇺🇸 USA', mo:'+1.8', yr:'+18.4', price:'898.40', info:'REIT data centers', pos:true },
+      { sym:'SPG',  name:'Simon Property Group',country:'🇺🇸 USA', mo:'-0.8', yr:'+4.2',  price:'168.30', info:'REIT malls premium', pos:false },
+      { sym:'O',    name:'Realty Income',       country:'🇺🇸 USA', mo:'-1.4', yr:'-4.2',  price:'54.80',  info:'REIT mensual · retail', pos:false },
+      { sym:'VNO',  name:'Vornado Realty',      country:'🇺🇸 USA', mo:'-4.2', yr:'-12.4', price:'38.60',  info:'REIT oficinas NYC', pos:false },
+    ]
+  },
+];
+
+// ── COUNTRIES DATA ──
+const countries = [
+  {
+    name:'Argentina', flag:'🇦🇷', code:'ARG',
+    desc:'Mercado emergente. BYMA/CNV. Acciones como ADRs en NYSE. Fuerte recuperación 2024-2025 impulsada por reformas macro y Vaca Muerta.',
+    indices:[{name:'MERVAL',val:'2.84M',chg:'+2.4%',pos:true},{name:'ADRs YTD',val:'+42%',chg:'vs S&P',pos:true}],
+    stocks:[
+      { sym:'VIST', name:'Vista Energy',     sector:'Energía',   mo:'+12.4', yr:'+68.2', price:'46.20',  info:'Vaca Muerta · shale oil', pos:true },
+      { sym:'MELI', name:'MercadoLibre',     sector:'Tech',      mo:'+4.1',  yr:'+31.2', price:'2180.40',info:'E-comm · FinTech LATAM', pos:true },
+      { sym:'GGAL', name:'Grupo Galicia',    sector:'Banco',     mo:'+5.8',  yr:'+82.3', price:'42.30',  info:'Banco líder privado', pos:true },
+      { sym:'BMA',  name:'Banco Macro',      sector:'Banco',     mo:'+3.4',  yr:'+74.1', price:'24.80',  info:'Banco privado retail', pos:true },
+      { sym:'CEPU', name:'Central Puerto',   sector:'Energía',   mo:'+4.2',  yr:'+48.2', price:'12.80',  info:'Generación eléctrica', pos:true },
+      { sym:'LOMA', name:'Loma Negra',       sector:'Cemento',   mo:'+1.8',  yr:'+28.4', price:'11.40',  info:'Cementera líder ARG', pos:true },
+      { sym:'SUPV', name:'Supervielle',      sector:'Banco',     mo:'+2.8',  yr:'+62.4', price:'8.60',   info:'Banco retail', pos:true },
+      { sym:'YPF',  name:'YPF S.A.',         sector:'Energía',   mo:'-2.8',  yr:'+32.1', price:'32.10',  info:'Estatal O&G', pos:false },
+      { sym:'TECO2',name:'Telecom Argentina',sector:'Telecom',   mo:'-1.2',  yr:'+18.4', price:'9.80',   info:'Telecom + cable ARG', pos:false },
+      { sym:'IRSA', name:'IRSA',             sector:'Real Estate',mo:'+3.1', yr:'+44.2', price:'14.60',  info:'Real estate ARG líder', pos:true },
+    ]
+  },
+  {
+    name:'Estados Unidos', flag:'🇺🇸', code:'USA',
+    desc:'Mayor mercado del mundo. NYSE + NASDAQ. S&P 500, Dow Jones, Nasdaq Composite. Liquidity benchmark global.',
+    indices:[{name:'S&P 500',val:'5,740',chg:'+0.8%',pos:true},{name:'NASDAQ',val:'18,210',chg:'+1.2%',pos:true}],
+    stocks:[
+      { sym:'NVDA', name:'NVIDIA Corp',      sector:'Semiconductores', mo:'+18.2', yr:'+142.3', price:'875.30',  info:'GPUs · IA líder', pos:true },
+      { sym:'AAPL', name:'Apple Inc',        sector:'Tech',            mo:'+5.4',  yr:'+22.1',  price:'228.60',  info:'Mega-cap consumer', pos:true },
+      { sym:'MSFT', name:'Microsoft',        sector:'Software',        mo:'+4.8',  yr:'+18.7',  price:'415.20',  info:'Azure · Copilot AI', pos:true },
+      { sym:'LLY',  name:'Eli Lilly',        sector:'Salud',           mo:'+8.4',  yr:'+42.1',  price:'812.30',  info:'GLP-1 · obesidad', pos:true },
+      { sym:'JPM',  name:'JPMorgan Chase',   sector:'Banco',           mo:'+4.1',  yr:'+38.7',  price:'248.60',  info:'Mayor banco USA', pos:true },
+      { sym:'GE',   name:'GE Aerospace',     sector:'Industrial',      mo:'+8.4',  yr:'+42.1',  price:'196.40',  info:'Motores jet · defensa', pos:true },
+      { sym:'XOM',  name:'Exxon Mobil',      sector:'Energía',         mo:'+6.1',  yr:'+22.3',  price:'118.45',  info:'Supermajor O&G', pos:true },
+      { sym:'META', name:'Meta Platforms',   sector:'Tech',            mo:'+3.2',  yr:'+64.8',  price:'598.70',  info:'Social media · AI', pos:true },
+      { sym:'TSLA', name:'Tesla Inc',        sector:'Automotriz',      mo:'-8.4',  yr:'+18.2',  price:'312.40',  info:'EV · política · Musk', pos:false },
+      { sym:'INTC', name:'Intel Corp',       sector:'Semiconductores', mo:'-8.4',  yr:'-38.2',  price:'24.60',   info:'Turnaround complicado', pos:false },
+    ]
+  },
+  {
+    name:'Brasil', flag:'🇧🇷', code:'BRA',
+    desc:'Mayor economía de LATAM. B3 (Bovespa). Fuerte exposición a commodities, agro y sector financiero.',
+    indices:[{name:'IBOVESPA',val:'128,400',chg:'+1.4%',pos:true},{name:'BRL/USD',val:'5.82',chg:'-0.8%',pos:false}],
+    stocks:[
+      { sym:'PBR',  name:'Petrobras ADR',    sector:'Energía',   mo:'+5.8',  yr:'+14.1', price:'15.30',  info:'Estatal O&G · alto div.', pos:true },
+      { sym:'ITUB', name:'Itaú Unibanco ADR',sector:'Banco',     mo:'+3.1',  yr:'+18.4', price:'7.20',   info:'Mayor banco Brasil', pos:true },
+      { sym:'VALE', name:'Vale S.A. ADR',    sector:'Minería',   mo:'+1.8',  yr:'-12.4', price:'9.80',   info:'Hierro · níquel global', pos:true },
+      { sym:'ABEV', name:'Ambev ADR',        sector:'Consumo',   mo:'+2.4',  yr:'+4.8',  price:'2.40',   info:'Cerveza · Brahma · Skol', pos:true },
+      { sym:'SBS',  name:'Sabesp ADR',       sector:'Utility',   mo:'+4.8',  yr:'+28.4', price:'12.80',  info:'Saneamiento São Paulo', pos:true },
+      { sym:'ERJ',  name:'Embraer ADR',      sector:'Aviación',  mo:'+6.4',  yr:'+48.2', price:'32.40',  info:'Aviones comerciales/militares', pos:true },
+      { sym:'GGB',  name:'Gerdau ADR',       sector:'Acero',     mo:'-2.1',  yr:'-8.4',  price:'4.20',   info:'Acero · construcción', pos:false },
+      { sym:'CIG',  name:'CEMIG ADR',        sector:'Utility',   mo:'+1.4',  yr:'+8.4',  price:'2.80',   info:'Energía eléctrica Minas', pos:true },
+    ]
+  },
+  {
+    name:'Alemania', flag:'🇩🇪', code:'DEU',
+    desc:'Mayor economía de Europa. DAX 40. Fuerte en automóviles, industrial, químicos y software empresarial.',
+    indices:[{name:'DAX 40',val:'22,840',chg:'+0.4%',pos:true},{name:'EUR/USD',val:'1.082',chg:'+0.1%',pos:true}],
+    stocks:[
+      { sym:'SAP',  name:'SAP SE ADR',       sector:'Software',  mo:'+4.8',  yr:'+42.4', price:'248.60', info:'ERP cloud líder mundial', pos:true },
+      { sym:'SIEGY',name:'Siemens ADR',      sector:'Industrial',mo:'+3.2',  yr:'+18.4', price:'96.40',  info:'Industrial tech · energía', pos:true },
+      { sym:'BAYRY',name:'Bayer AG ADR',     sector:'Salud',     mo:'-4.2',  yr:'-22.4', price:'8.60',   info:'Pharma + agro · litigios', pos:false },
+      { sym:'DDAIF',name:'Mercedes-Benz ADR',sector:'Automotriz',mo:'-2.8',  yr:'-18.4', price:'62.40',  info:'Autos de lujo · EV transición', pos:false },
+      { sym:'LIN',  name:'Linde PLC',        sector:'Químicos',  mo:'+2.4',  yr:'+14.2', price:'468.30', info:'Gases industriales líder', pos:true },
+    ]
+  },
+  {
+    name:'Reino Unido', flag:'🇬🇧', code:'GBR',
+    desc:'FTSE 100. Financiero, energía y consumo. Libra esterlina. Post-Brexit con mercados estables.',
+    indices:[{name:'FTSE 100',val:'8,620',chg:'+0.2%',pos:true},{name:'GBP/USD',val:'1.264',chg:'-0.1%',pos:false}],
+    stocks:[
+      { sym:'HSBC', name:'HSBC Holdings ADR',sector:'Banco',     mo:'+2.4',  yr:'+22.1', price:'48.60',  info:'Banco global UK-Asia', pos:true },
+      { sym:'BP',   name:'BP p.l.c. ADR',    sector:'Energía',   mo:'+3.8',  yr:'+8.4',  price:'34.20',  info:'Supermajor británico', pos:true },
+      { sym:'SHEL', name:'Shell PLC ADR',     sector:'Energía',   mo:'+4.2',  yr:'+12.4', price:'72.40',  info:'Supermajor · LNG líder', pos:true },
+      { sym:'RIO',  name:'Rio Tinto ADR',     sector:'Minería',   mo:'+3.2',  yr:'+6.8',  price:'68.40',  info:'Hierro · aluminio · cobre', pos:true },
+      { sym:'AZN',  name:'AstraZeneca ADR',   sector:'Salud',     mo:'+4.8',  yr:'+18.4', price:'74.60',  info:'Oncología · vacunas', pos:true },
+    ]
+  },
+  {
+    name:'Francia', flag:'🇫🇷', code:'FRA',
+    desc:'CAC 40. Empresas de lujo, energía y aeroespacial. Fuerte presencia global en consumo premium.',
+    indices:[{name:'CAC 40',val:'8,140',chg:'-0.2%',pos:false},{name:'EUR/USD',val:'1.082',chg:'+0.1%',pos:true}],
+    stocks:[
+      { sym:'TTE',  name:'TotalEnergies ADR', sector:'Energía',  mo:'+2.4',  yr:'+6.8',  price:'68.30',  info:'Supermajor + GNL', pos:true },
+      { sym:'LVMUY',name:'LVMH ADR',          sector:'Lujo',     mo:'-1.8',  yr:'-12.4', price:'142.30', info:'Louis Vuitton · Moët · Dior', pos:false },
+      { sym:'CPRI', name:'Capri Holdings',    sector:'Lujo',     mo:'+2.1',  yr:'+4.8',  price:'24.80',  info:'Versace · Michael Kors', pos:true },
+      { sym:'ORAN', name:'Orange SA ADR',     sector:'Telecom',  mo:'+1.2',  yr:'+4.2',  price:'12.40',  info:'Telecom Europa-África', pos:true },
+    ]
+  },
+  {
+    name:'Países Bajos', flag:'🇳🇱', code:'NLD',
+    desc:'AEX. Economía abierta, hub logístico europeo. Sede de ASML, Philips y Shell.',
+    indices:[{name:'AEX',val:'918',chg:'+0.6%',pos:true},{name:'EUR/USD',val:'1.082',chg:'+0.1%',pos:true}],
+    stocks:[
+      { sym:'ASML', name:'ASML Holding ADR',  sector:'Semiconductores', mo:'+2.1', yr:'+8.4',  price:'748.60', info:'Litografía EUV · monopolio global', pos:true },
+      { sym:'PHG',  name:'Philips ADR',        sector:'Salud/Tech',      mo:'+3.8', yr:'+12.4', price:'24.80',  info:'Tecnología médica · turnaround', pos:true },
+      { sym:'NXPI', name:'NXP Semiconductors', sector:'Semiconductores', mo:'+4.2', yr:'+18.4', price:'212.40', info:'Chips automotriz · IoT', pos:true },
+    ]
+  },
+  {
+    name:'Dinamarca', flag:'🇩🇰', code:'DNK',
+    desc:'C25. Economía nórdica de alta calidad. Novo Nordisk representa ~60% del índice nacional.',
+    indices:[{name:'OMXC25',val:'2,840',chg:'+1.2%',pos:true},{name:'DKK/USD',val:'0.144',chg:'—',pos:true}],
+    stocks:[
+      { sym:'NVO',  name:'Novo Nordisk ADR',   sector:'Salud',   mo:'+6.2',  yr:'+28.4', price:'96.40',  info:'Ozempic · Wegovy · GLP-1', pos:true },
+      { sym:'ORSTED',name:'Ørsted ADR',         sector:'Utilities',mo:'-2.4', yr:'-8.4',  price:'14.20',  info:'Eólica offshore · presión', pos:false },
+    ]
+  },
+  {
+    name:'Japón', flag:'🇯🇵', code:'JPN',
+    desc:'Nikkei 225 / TOPIX. Segunda mayor bolsa de Asia. Autos, electrónica y manufactura de precisión.',
+    indices:[{name:'Nikkei 225',val:'38,200',chg:'+0.6%',pos:true},{name:'USD/JPY',val:'149.8',chg:'+0.3%',pos:true}],
+    stocks:[
+      { sym:'TM',   name:'Toyota Motor ADR',   sector:'Automotriz', mo:'+4.2', yr:'+18.4', price:'196.40', info:'Híbridos · mayor fabricante auto', pos:true },
+      { sym:'SONY', name:'Sony Group ADR',      sector:'Tech/Media',  mo:'+3.8', yr:'+22.4', price:'98.60',  info:'Entretenimiento · PS5 · sensores', pos:true },
+      { sym:'HMC',  name:'Honda Motor ADR',     sector:'Automotriz', mo:'+2.4', yr:'+8.4',  price:'28.60',  info:'Autos + motos + aviación', pos:true },
+      { sym:'FANUY',name:'Fanuc ADR',            sector:'Robótica',   mo:'+3.1', yr:'+12.4', price:'24.40',  info:'Robots industriales · CNC', pos:true },
+    ]
+  },
+  {
+    name:'China', flag:'🇨🇳', code:'CHN',
+    desc:'Shanghai + Hong Kong (Hang Seng). Segunda mayor economía mundial. Volatilidad regulatoria alta.',
+    indices:[{name:'Hang Seng',val:'20,840',chg:'-0.8%',pos:false},{name:'CNY/USD',val:'7.24',chg:'+0.1%',pos:true}],
+    stocks:[
+      { sym:'BABA', name:'Alibaba Group ADR',   sector:'E-comm/Cloud', mo:'+12.4', yr:'-8.4',  price:'142.30', info:'E-comm China · Cloud · AI', pos:true },
+      { sym:'BIDU', name:'Baidu ADR',            sector:'Tech/IA',      mo:'-4.2',  yr:'-18.4', price:'98.40',  info:'Search China · DeepSeek rival', pos:false },
+      { sym:'JD',   name:'JD.com ADR',           sector:'E-comm',       mo:'+8.4',  yr:'+4.2',  price:'42.30',  info:'E-comm logística China', pos:true },
+      { sym:'PDD',  name:'PDD Holdings ADR',     sector:'E-comm',       mo:'+6.2',  yr:'+18.4', price:'98.60',  info:'Temu · Pinduoduo', pos:true },
+    ]
+  },
+  {
+    name:'Australia', flag:'🇦🇺', code:'AUS',
+    desc:'ASX 200. Minería, energía y financiero dominan. Dólar australiano correlacionado con commodities.',
+    indices:[{name:'ASX 200',val:'8,240',chg:'+0.4%',pos:true},{name:'AUD/USD',val:'0.624',chg:'-0.2%',pos:false}],
+    stocks:[
+      { sym:'BHP',  name:'BHP Group ADR',       sector:'Minería',    mo:'+4.8', yr:'+8.4',  price:'52.30',  info:'Hierro · cobre · carbón', pos:true },
+      { sym:'RIO',  name:'Rio Tinto ADR',        sector:'Minería',    mo:'+3.2', yr:'+6.8',  price:'68.40',  info:'Hierro · aluminio', pos:true },
+      { sym:'WDS',  name:'Woodside Energy ADR',  sector:'Energía',    mo:'+2.8', yr:'+4.2',  price:'18.40',  info:'LNG · gas natural', pos:true },
+    ]
+  },
+  {
+    name:'Corea del Sur', flag:'🇰🇷', code:'KOR',
+    desc:'KOSPI. Semiconductores, electrónica y autos. Samsung y SK Hynix dominan el índice.',
+    indices:[{name:'KOSPI',val:'2,640',chg:'+0.8%',pos:true},{name:'USD/KRW',val:'1,336',chg:'-0.2%',pos:false}],
+    stocks:[
+      { sym:'SSNLF',name:'Samsung Electronics',  sector:'Semiconductores', mo:'+4.2', yr:'+8.4',  price:'1.42',  info:'Chips · Galaxy · pantallas', pos:true },
+      { sym:'HYMTF',name:'Hyundai Motor',         sector:'Automotriz',      mo:'+6.4', yr:'+18.4', price:'42.80', info:'Autos + Kia + EV', pos:true },
+      { sym:'LGEIY',name:'LG Electronics ADR',    sector:'Electrónica',     mo:'+2.4', yr:'+4.8',  price:'28.40', info:'Consumer electronics · OLED', pos:true },
+    ]
+  },
+  {
+    name:'India', flag:'🇮🇳', code:'IND',
+    desc:'BSE Sensex / NSE Nifty. Economía de mayor crecimiento entre los grandes. Tech, financiero y consumo.',
+    indices:[{name:'NIFTY 50',val:'22,480',chg:'+0.6%',pos:true},{name:'USD/INR',val:'84.2',chg:'+0.1%',pos:true}],
+    stocks:[
+      { sym:'INFY', name:'Infosys ADR',          sector:'IT Services', mo:'+4.2', yr:'+12.4', price:'22.40', info:'IT outsourcing · AI services', pos:true },
+      { sym:'WIT',  name:'Wipro ADR',             sector:'IT Services', mo:'+2.8', yr:'+8.4',  price:'6.80',  info:'IT consulting global', pos:true },
+      { sym:'HDB',  name:'HDFC Bank ADR',         sector:'Banco',       mo:'+3.4', yr:'+4.8',  price:'68.40', info:'Mayor banco privado India', pos:true },
+      { sym:'IBN',  name:'ICICI Bank ADR',        sector:'Banco',       mo:'+4.8', yr:'+18.4', price:'28.60', info:'Banco retail + digital', pos:true },
+    ]
+  },
+];
+
+// Sector comparison data (sectores + países)
+
+const countryComparison = [
+  { code:'ARG', name:'Argentina',    flag:'🇦🇷', mo:'+42.0', yr:'+142.0', pe:'8.2',  div:'2.1%', moPos:true,  yrPos:true, note:'ADR basket' },
+  { code:'USA', name:'EE.UU.',       flag:'🇺🇸', mo:'+2.4',  yr:'+24.8',  pe:'22.4', div:'1.4%', moPos:true,  yrPos:true, note:'S&P 500' },
+  { code:'BRA', name:'Brasil',       flag:'🇧🇷', mo:'+1.4',  yr:'+8.4',   pe:'10.8', div:'4.2%', moPos:true,  yrPos:true, note:'IBOVESPA' },
+  { code:'DEU', name:'Alemania',     flag:'🇩🇪', mo:'+0.4',  yr:'+18.4',  pe:'14.2', div:'3.2%', moPos:true,  yrPos:true, note:'DAX 40' },
+  { code:'GBR', name:'Reino Unido',  flag:'🇬🇧', mo:'+0.2',  yr:'+8.4',   pe:'12.8', div:'3.8%', moPos:true,  yrPos:true, note:'FTSE 100' },
+  { code:'FRA', name:'Francia',      flag:'🇫🇷', mo:'-0.2',  yr:'+4.8',   pe:'15.4', div:'2.8%', moPos:false, yrPos:true, note:'CAC 40' },
+  { code:'JPN', name:'Japón',        flag:'🇯🇵', mo:'+0.6',  yr:'+12.4',  pe:'18.2', div:'2.1%', moPos:true,  yrPos:true, note:'Nikkei 225' },
+  { code:'CHN', name:'China',        flag:'🇨🇳', mo:'-0.8',  yr:'-4.8',   pe:'12.4', div:'1.8%', moPos:false, yrPos:false,note:'Hang Seng' },
+  { code:'IND', name:'India',        flag:'🇮🇳', mo:'+0.6',  yr:'+18.4',  pe:'24.8', div:'1.2%', moPos:true,  yrPos:true, note:'NIFTY 50' },
+  { code:'AUS', name:'Australia',    flag:'🇦🇺', mo:'+0.4',  yr:'+8.4',   pe:'17.2', div:'4.4%', moPos:true,  yrPos:true, note:'ASX 200' },
+  { code:'KOR', name:'Corea del Sur',flag:'🇰🇷', mo:'+0.8',  yr:'+4.2',   pe:'11.4', div:'2.4%', moPos:true,  yrPos:true, note:'KOSPI' },
+];
+const sectorComparison = [
+  { etf:'XLK',  name:'Tecnología',   mo:'+3.1', yr:'+28.4', pe:'32.4', div:'0.8%', moPos:true,  yrPos:true  },
+  { etf:'XLF',  name:'Financiero',   mo:'+2.8', yr:'+32.1', pe:'16.2', div:'1.9%', moPos:true,  yrPos:true  },
+  { etf:'XLE',  name:'Energía',      mo:'+4.2', yr:'+18.7', pe:'12.8', div:'3.4%', moPos:true,  yrPos:true  },
+  { etf:'XLV',  name:'Salud',        mo:'+1.4', yr:'+8.3',  pe:'22.1', div:'1.4%', moPos:true,  yrPos:true  },
+  { etf:'XLI',  name:'Industrial',   mo:'+2.4', yr:'+16.8', pe:'24.6', div:'1.2%', moPos:true,  yrPos:true  },
+  { etf:'XLB',  name:'Materiales',   mo:'+2.1', yr:'+12.4', pe:'19.4', div:'1.8%', moPos:true,  yrPos:true  },
+  { etf:'XLU',  name:'Utilities',    mo:'+1.8', yr:'+6.4',  pe:'18.2', div:'3.2%', moPos:true,  yrPos:true  },
+  { etf:'XLY',  name:'Consumo D.',   mo:'-0.8', yr:'+14.2', pe:'28.4', div:'0.6%', moPos:false, yrPos:true  },
+  { etf:'XLRE', name:'Real Estate',  mo:'-1.2', yr:'+4.8',  pe:'36.8', div:'3.8%', moPos:false, yrPos:true  },
+];
+
+function buildSectors() {
+  secLoaded = true;
+  secView = 'sectors';
+  buildSectorTabs();
+  renderSector(0);
+}
+
+let secView = 'sectors'; // 'sectors' | 'countries' | 'compare'
+let activeCountry = 0;
+
+function buildSectorTabs() {
+  const viewBtns = `
+    <div style="display:flex;gap:6px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <div class="sec-tab ${secView==='sectors'?'active':''}" onclick="setSecView('sectors')">Por Sector</div>
+      <div class="sec-tab ${secView==='countries'?'active':''}" onclick="setSecView('countries')">Por País</div>
+      <div class="sec-tab ${secView==='compare'?'active':''}" onclick="setSecView('compare')">Comparativa</div>
+    </div>`;
+  if (secView === 'sectors') {
+    document.getElementById('sector-tabs').innerHTML = viewBtns + sectors.map((s,i) =>
+      `<div class="sec-tab ${i===activeSector?'active':''}" onclick="switchSector(${i})">${s.etf} · ${s.name}</div>`
+    ).join('');
+  } else if (secView === 'countries') {
+    document.getElementById('sector-tabs').innerHTML = viewBtns + countries.map((cc,i) =>
+      `<div class="sec-tab ${i===activeCountry?'active':''}" onclick="switchCountry(${i})">${cc.flag} ${cc.name}</div>`
+    ).join('');
+  } else {
+    document.getElementById('sector-tabs').innerHTML = viewBtns;
+  }
+}
+
+function setSecView(v) {
+  secView = v;
+  buildSectorTabs();
+  if (v === 'sectors') renderSector(activeSector);
+  else if (v === 'countries') renderCountry(activeCountry);
+  else renderCompare();
+}
+
+function switchSector(i) {
+  activeSector = i;
+  buildSectorTabs();
+  renderSector(i);
+}
+
+function switchCountry(i) {
+  activeCountry = i;
+  buildSectorTabs();
+  renderCountry(i);
+}
+
+function renderSector(i) {
+  const s = sectors[i];
+  document.getElementById('sector-etf-card').innerHTML = `
+    <div class="sector-etf-card">
+      <div>
+        <div class="etf-sym">${s.etf}</div>
+        <div class="etf-name">${s.etfName}</div>
+        <div class="etf-desc">${s.etfDesc}</div>
+      </div>
+      <div class="etf-perf">
+        <div class="perf-row" style="margin-bottom:12px">
+          <div class="perf-label">1 Mes</div>
+          <div class="perf-val ${s.moPos?'perf-pos':'perf-neg'}">${s.mo}</div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-label">1 Año</div>
+          <div class="perf-val ${s.yrPos?'perf-pos':'perf-neg'}">${s.yr}</div>
+        </div>
+      </div>
+    </div>`;
+  const sorted = [...s.stocks].sort((a,b) => parseFloat(b.mo)-parseFloat(a.mo));
+  document.getElementById('stocks-list').innerHTML = sorted.map((st,idx) => {
+    const moPos = parseFloat(st.mo) >= 0;
+    const yrPos = parseFloat(st.yr) >= 0;
+    return `<div class="stock-row" onclick="document.getElementById('chart-ticker').value='${st.sym}';showPage('charts');setTimeout(loadChart,300)">
+      <div class="stock-rank">#${idx+1}</div>
+      <div><div class="stock-sym">${st.sym}</div><div class="stock-name">${st.name} <span style="color:var(--dim2)">${st.country}</span></div></div>
+      <div class="stock-price">$${st.price}</div>
+      <div class="stock-mo ${moPos?'d-up':'d-dn'}">${moPos?'+':''}${st.mo}%</div>
+      <div class="stock-mo ${yrPos?'d-up':'d-dn'}">${yrPos?'+':''}${st.yr}%</div>
+      <div class="stock-info">${st.info}</div>
+    </div>`;
+  }).join('');
+  loadSectorNews(s);
+}
+
+function renderCountry(i) {
+  const cc = countries[i];
+  document.getElementById('sector-etf-card').innerHTML = `
+    <div class="sector-etf-card">
+      <div>
+        <div class="etf-sym">${cc.flag} ${cc.name}</div>
+        <div class="etf-name">${cc.code} · Acciones disponibles como ADRs / listadas</div>
+        <div class="etf-desc">${cc.desc}</div>
+        <div style="display:flex;gap:12px;margin-top:10px">
+          ${cc.indices.map(idx => `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:8px 12px">
+            <div style="font-size:10px;color:var(--dim);letter-spacing:.12em">${idx.name}</div>
+            <div style="font-size:16px;font-weight:600;color:var(--white)">${idx.val}</div>
+            <div style="font-size:11px" class="${idx.pos?'d-up':'d-dn'}">${idx.chg}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="etf-perf">
+        <div style="font-size:10px;color:var(--dim);letter-spacing:.15em;margin-bottom:8px">ACCIONES</div>
+        <div style="font-family:'Bebas Neue';font-size:36px;color:var(--white)">${cc.stocks.length}</div>
+      </div>
+    </div>`;
+  const sorted = [...cc.stocks].sort((a,b) => parseFloat(b.mo)-parseFloat(a.mo));
+  document.getElementById('stocks-list').innerHTML = sorted.map((st,idx) => {
+    const moPos = parseFloat(st.mo) >= 0;
+    const yrPos = parseFloat(st.yr) >= 0;
+    return `<div class="stock-row" onclick="document.getElementById('chart-ticker').value='${st.sym}';showPage('charts');setTimeout(loadChart,300)">
+      <div class="stock-rank">#${idx+1}</div>
+      <div><div class="stock-sym">${st.sym}</div><div class="stock-name">${st.name} · <span style="color:var(--cyan);font-size:10px">${st.sector}</span></div></div>
+      <div class="stock-price">$${st.price}</div>
+      <div class="stock-mo ${moPos?'d-up':'d-dn'}">${moPos?'+':''}${st.mo}%</div>
+      <div class="stock-mo ${yrPos?'d-up':'d-dn'}">${yrPos?'+':''}${st.yr}%</div>
+      <div class="stock-info">${st.info}</div>
+    </div>`;
+  }).join('');
+  // Country news
+  loadSectorNews({ etf: cc.code, stocks: cc.stocks, name: cc.name });
+}
+
+let compareTab = 'sectors';
+function renderCompare() {
+  const tabHtml = `
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <div class="ibtn ${compareTab==='sectors'?'active':''}" onclick="compareTab='sectors';renderCompare()">Por Sector</div>
+      <div class="ibtn ${compareTab==='countries'?'active':''}" onclick="compareTab='countries';renderCompare()">Por País</div>
+    </div>`;
+
+  let tableHtml = '';
+  if (compareTab === 'sectors') {
+    const thStyle = 'padding:10px 12px;text-align:right;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)';
+    const thL = 'padding:10px 12px;text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)';
+    tableHtml = `
+      <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:12px">// Sectores S&P 500 — Comparativa completa</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:580px">
+          <thead><tr style="background:var(--bg3)">
+            <th style="${thL}">Sector</th>
+            <th style="${thStyle.replace('right','center')}">ETF</th>
+            <th style="${thStyle}">1 Mes</th>
+            <th style="${thStyle}">1 Año</th>
+            <th style="${thStyle}">P/E</th>
+            <th style="${thStyle}">Yield</th>
+            <th style="${thL}">Performance 1A</th>
+          </tr></thead>
+          <tbody>
+            ${[...sectorComparison].sort((a,b)=>parseFloat(b.yr)-parseFloat(a.yr)).map(s => {
+              const barW = Math.min(Math.abs(parseFloat(s.yr)) * 2.2, 100);
+              const barColor = s.yrPos ? 'var(--green)' : 'var(--red)';
+              const secIdx = sectors.findIndex(x=>x.etf===s.etf);
+              return `<tr style="border-top:1px solid var(--border);cursor:pointer" onclick="setSecView('sectors');switchSector(${secIdx})">
+                <td style="padding:11px 12px;font-size:13px;color:var(--white);font-family:'Syne',sans-serif;font-weight:600">${s.name}</td>
+                <td style="padding:11px 12px;text-align:center"><span style="font-family:'Bebas Neue';font-size:13px;letter-spacing:.08em;color:var(--dim)">${s.etf}</span></td>
+                <td style="padding:11px 12px;text-align:right;font-weight:600;font-size:13px" class="${s.moPos?'d-up':'d-dn'}">${s.moPos?'+':''}${s.mo}%</td>
+                <td style="padding:11px 12px;text-align:right;font-weight:600;font-size:13px" class="${s.yrPos?'d-up':'d-dn'}">${s.yrPos?'+':''}${s.yr}%</td>
+                <td style="padding:11px 12px;text-align:right;font-size:13px;color:var(--white)">${s.pe}x</td>
+                <td style="padding:11px 12px;text-align:right;font-size:13px;color:var(--cyan)">${s.div}</td>
+                <td style="padding:11px 12px;min-width:130px">
+                  <div style="background:var(--border);border-radius:2px;height:7px;overflow:hidden">
+                    <div style="height:100%;width:${barW}%;background:${barColor};border-radius:2px"></div>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:10px;color:var(--dim2);margin-top:10px">Hacé click en una fila para ver el sector completo · Datos de referencia</div>`;
+  } else {
+    const thStyle = 'padding:10px 12px;text-align:right;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)';
+    const thL = 'padding:10px 12px;text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)';
+    tableHtml = `
+      <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:12px">// Mercados por País — Comparativa global</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:620px">
+          <thead><tr style="background:var(--bg3)">
+            <th style="${thL}">País</th>
+            <th style="${thStyle.replace('right','center')}">Índice</th>
+            <th style="${thStyle}">1 Mes</th>
+            <th style="${thStyle}">1 Año</th>
+            <th style="${thStyle}">P/E</th>
+            <th style="${thStyle}">Yield</th>
+            <th style="${thL}">Performance 1A</th>
+          </tr></thead>
+          <tbody>
+            ${[...countryComparison].sort((a,b)=>parseFloat(b.yr)-parseFloat(a.yr)).map(cc => {
+              const maxAbs = Math.max(...countryComparison.map(x=>Math.abs(parseFloat(x.yr))));
+              const barW = Math.min(Math.abs(parseFloat(cc.yr)) / maxAbs * 100, 100);
+              const barColor = cc.yrPos ? 'var(--green)' : 'var(--red)';
+              const cIdx = countries.findIndex(x=>x.code===cc.code);
+              return `<tr style="border-top:1px solid var(--border);cursor:pointer" onclick="setSecView('countries');switchCountry(${cIdx})">
+                <td style="padding:11px 12px">
+                  <span style="font-size:16px">${cc.flag}</span>
+                  <span style="font-size:13px;color:var(--white);font-family:'Syne',sans-serif;font-weight:600;margin-left:8px">${cc.name}</span>
+                </td>
+                <td style="padding:11px 12px;text-align:center;font-size:11px;color:var(--dim)">${cc.note}</td>
+                <td style="padding:11px 12px;text-align:right;font-weight:600;font-size:13px" class="${cc.moPos?'d-up':'d-dn'}">${cc.moPos?'+':''}${cc.mo}%</td>
+                <td style="padding:11px 12px;text-align:right;font-weight:600;font-size:13px" class="${cc.yrPos?'d-up':'d-dn'}">${cc.yrPos?'+':''}${cc.yr}%</td>
+                <td style="padding:11px 12px;text-align:right;font-size:13px;color:var(--white)">${cc.pe}x</td>
+                <td style="padding:11px 12px;text-align:right;font-size:13px;color:var(--cyan)">${cc.div}</td>
+                <td style="padding:11px 12px;min-width:130px">
+                  <div style="background:var(--border);border-radius:2px;height:7px;overflow:hidden">
+                    <div style="height:100%;width:${barW}%;background:${barColor};border-radius:2px"></div>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:10px;color:var(--dim2);margin-top:10px">Hacé click en un país para ver sus acciones · Datos de referencia</div>`;
+  }
+
+  document.getElementById('sector-etf-card').innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:18px 22px;margin-bottom:14px">
+      ${tabHtml}${tableHtml}
+    </div>`;
+  document.getElementById('stocks-list').innerHTML = '';
+  document.getElementById('sector-news').innerHTML = '<div class="news-loading">Seleccioná un sector o país para ver noticias</div>';
+}
+
+async function loadSectorNews(sector) {
+  const newsEl = document.getElementById('sector-news');
+  newsEl.innerHTML = '<div class="news-loading"><span class="spin">◌</span> Cargando noticias...</div>';
+  const keywords = sector.stocks.slice(0,4).map(s => s.sym).join(' OR ');
+  const query = encodeURIComponent(`${sector.etf} ${sector.name} stock`);
+  try {
+    const syms = sector.stocks.slice(0,3).map(s=>s.sym).join(',');
+    const rssUrl = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${syms}&region=US&lang=en-US`;
+    const xmlText = await fetchRSS(rssUrl);
+    if (!xmlText) throw new Error('RSS vacío');
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlText, 'text/xml');
+    const items = xml.querySelectorAll('item');
+    if (items.length === 0) throw new Error('No items');
+    let html = '';
+    Array.from(items).slice(0,8).forEach(item => {
+      const title = item.querySelector('title')?.textContent || '';
+      const link  = item.querySelector('link')?.textContent || '#';
+      const pubDate = item.querySelector('pubDate')?.textContent || '';
+      const date = pubDate ? new Date(pubDate).toLocaleDateString('es-AR', {day:'2-digit',month:'short'}) : '';
+      html += `<div class="news-card" onclick="window.open('${link}','_blank')">
+        <div class="news-headline">${title}</div>
+        <div class="news-meta"><span class="news-src">Yahoo Finance</span><span>${date}</span></div>
+      </div>`;
+    });
+    newsEl.innerHTML = html;
+  } catch(e) {
+    // Fallback: show static placeholder news
+    const fallback = [
+      { h:`${sector.stocks[0].sym}: Analistas elevan precio objetivo tras resultados`, src:'Bloomberg', d:'Hoy' },
+      { h:`Sector ${sector.name}: perspectivas para Q2 2026`, src:'Reuters', d:'Ayer' },
+      { h:`${sector.etf} ETF registra flujos positivos por tercera semana consecutiva`, src:'WSJ', d:'3 Mar' },
+      { h:`Volatilidad en tasas impacta valoraciones del sector ${sector.name}`, src:'FT', d:'2 Mar' },
+    ];
+    newsEl.innerHTML = fallback.map(n => `<div class="news-card"><div class="news-headline">${n.h}</div><div class="news-meta"><span class="news-src">${n.src}</span><span>${n.d}</span></div></div>`).join('') +
+      `<div style="font-size:10px;color:var(--dim2);padding:10px 0;text-align:center">Activá un proxy o extensión CORS para noticias en tiempo real</div>`;
+  }
+}
+
+// ── INIT ──
+showPage('home');
+</script>
+</body>
+</html>
