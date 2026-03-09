@@ -939,10 +939,6 @@ nav {
         <div class="ibtn" onclick="setRange('max')" data-rng="max">MAX</div>
       </div>
     </div>
-    <div class="field" style="max-width:260px">
-      <label>Claude API Key (para análisis IA)</label>
-      <input type="password" id="chart-claude-key" placeholder="sk-ant-..." autocomplete="off">
-    </div>
     <button class="btn-primary" onclick="loadChart()">⚡ CARGAR</button>
   </div>
 
@@ -1637,7 +1633,6 @@ function calcMACD(times, closes, fast=12, slow=26, signal=9) {
 
 async function runAIChartAnalysis() {
   const ticker = document.getElementById('chart-ticker').value.trim().toUpperCase();
-  const apiKey = document.getElementById('chart-claude-key').value.trim();
   if (!rawOHLCV.length) { document.getElementById('chart-ai-text').textContent = 'Cargá un gráfico primero.'; return; }
   const el = document.getElementById('chart-ai-text');
   el.innerHTML = '<span class="spin">◌</span> Analizando indicadores...';
@@ -1655,24 +1650,15 @@ async function runAIChartAnalysis() {
   const lastMACD = macdLine[macdLine.length-1]?.value, lastSig = signalLine[signalLine.length-1]?.value;
   const aktInd = [...activeIndicators].join(', ');
   const prompt = `Sos analista técnico experto. Analizá el gráfico de ${ticker} con los siguientes datos de indicadores:\n\nPRECIO ACTUAL: $${last.close.toFixed(2)}\nSMA 200: ${lastSMA200?.toFixed(2)||'N/A'} (precio ${last.close>lastSMA200?'POR ENCIMA':'POR DEBAJO'})\nSMA 50: ${lastSMA50?.toFixed(2)||'N/A'} (precio ${last.close>lastSMA50?'POR ENCIMA':'POR DEBAJO'})\nRSI (14): ${lastRSI?.toFixed(1)||'N/A'} (${lastRSI>70?'SOBRECOMPRADO':lastRSI<30?'SOBREVENDIDO':'NEUTRAL'})\nBollinger Upper: ${bbU?.toFixed(2)||'N/A'} | Lower: ${bbL?.toFixed(2)||'N/A'}\nMACD: ${lastMACD?.toFixed(3)||'N/A'} | Signal: ${lastSig?.toFixed(3)||'N/A'} (${lastMACD>lastSig?'ALCISTA':'BAJISTA'})\nINDICADORES ACTIVOS: ${aktInd}\n\nEscribí un análisis técnico en español de 4-6 oraciones que integre todos estos indicadores, explique la tendencia actual, zonas de soporte/resistencia importantes, y una perspectiva a corto plazo. Sé directo y útil para un trader.`;
-  if (!apiKey) {
-    el.innerHTML = '<span style="color:var(--amber)">⚠ Ingresá tu Claude API Key arriba para activar el análisis IA.</span>';
-    return;
-  }
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, messages:[{role:'user',content:prompt}] })
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ prompt })
     });
     if (!res.ok) {
       const err = await res.json().catch(()=>({}));
-      el.innerHTML = '<span style="color:var(--red)">Error API: ' + (err?.error?.message || res.status) + '</span>';
+      el.innerHTML = '<span style="color:var(--red)">Error: ' + (err?.error || res.status) + '</span>';
       return;
     }
     const data = await res.json();
