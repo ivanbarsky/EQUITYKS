@@ -1,4 +1,5 @@
 export default async function handler(req, res) {
+  // Allow CORS from anywhere
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -13,11 +14,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing url parameter' });
   }
 
+  // Only allow whitelisted URLs for security
   const decoded = decodeURIComponent(url);
   const allowed = [
     'query1.finance.yahoo.com',
     'query2.finance.yahoo.com',
     'feeds.finance.yahoo.com',
+    'financialmodelingprep.com',
   ];
 
   const isAllowed = allowed.some(domain => decoded.includes(domain));
