@@ -797,9 +797,10 @@ nav {
       <div class="module-breadcrumb" onclick="showPage('home')">← EQUITYKS</div>
       <div class="module-title">Balance <span>Analyzer</span></div>
     </div>
-    <div style="font-size:10px;color:var(--dim);letter-spacing:.15em">v4 · AI POWERED</div>
+    <div style="font-size:10px;color:var(--dim);letter-spacing:.15em">01 · AI POWERED</div>
   </div>
 
+  <!-- MODE TABS -->
   <div class="mode-tabs">
     <div class="mode-tab active" id="btab-usa" onclick="bSwitchMode('usa')">
       <div class="tab-badge badge-api">API Tiempo Real</div>
@@ -817,11 +818,11 @@ nav {
 
   <!-- USA Panel -->
   <div class="panel active" id="bpanel-usa">
-    <div class="panel-header">// MODO USA — <span>Financial Modeling Prep API</span></div>
+    <div class="panel-header">// MODO USA — <span>Financial Modeling Prep API via Proxy</span></div>
     <div class="form-grid" style="margin-bottom:14px">
       <div class="field">
         <label>Ticker(s)</label>
-        <input type="text" id="usa-ticker" placeholder="Ej: AAPL, MELI, VIST">
+        <input type="text" id="usa-ticker" placeholder="Ej: AAPL, MELI, VIST" style="text-transform:uppercase">
       </div>
       <div class="field">
         <label>Período</label>
@@ -835,8 +836,8 @@ nav {
     <div class="form-grid" style="align-items:end">
       <div class="field" style="grid-column:span 2">
         <label>API Key (FMP)</label>
-        <input type="password" id="usa-apikey" placeholder="Tu API key de FMP">
-        <div class="hint">Gratis en <a href="https://financialmodelingprep.com" target="_blank">financialmodelingprep.com</a></div>
+        <input type="password" id="usa-apikey" placeholder="Tu API key de financialmodelingprep.com">
+        <div class="hint">Gratis en <a href="https://financialmodelingprep.com" target="_blank">financialmodelingprep.com</a> · Plan free incluye datos básicos</div>
       </div>
       <div class="field" style="justify-content:flex-end">
         <button class="btn-primary" id="bbtn-usa" onclick="bAnalyzeUSA()">⚡ ANALIZAR</button>
@@ -844,7 +845,7 @@ nav {
     </div>
   </div>
 
-  <!-- AR Panel -->
+  <!-- ARG Panel -->
   <div class="panel" id="bpanel-ar">
     <div class="panel-header">// MODO ARG — <span>IA Parser · PDF / Excel / CSV</span></div>
     <div class="form-grid2" style="margin-bottom:14px">
@@ -880,14 +881,14 @@ nav {
   <!-- Features -->
   <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:8px">// Funciones adicionales</div>
   <div class="feat-grid">
-    <div class="feat-card on" id="bf-ratios" onclick="bToggleFeat('ratios')"><span class="feat-icon">📊</span><div class="feat-title">Ratios Financieros</div><div class="feat-desc">Liquidez, solvencia, rentabilidad</div><div class="feat-tog"></div></div>
-    <div class="feat-card on" id="bf-risks"  onclick="bToggleFeat('risks')"><span class="feat-icon">⚠️</span><div class="feat-title">Riesgos & Oportunidades</div><div class="feat-desc">Alertas automáticas</div><div class="feat-tog"></div></div>
-    <div class="feat-card on" id="bf-compare" onclick="bToggleFeat('compare')"><span class="feat-icon">📈</span><div class="feat-title">Evolución Histórica</div><div class="feat-desc">Tendencias por período</div><div class="feat-tog"></div></div>
-    <div class="feat-card" id="bf-dcf"    onclick="bToggleFeat('dcf')"><span class="feat-icon">💰</span><div class="feat-title">Valuación DCF</div><div class="feat-desc">Valor intrínseco estimado</div><div class="feat-tog"></div></div>
-    <div class="feat-card" id="bf-altman" onclick="bToggleFeat('altman')"><span class="feat-icon">🔬</span><div class="feat-title">Altman Z-Score</div><div class="feat-desc">Probabilidad de quiebra</div><div class="feat-tog"></div></div>
-    <div class="feat-card" id="bf-sector" onclick="bToggleFeat('sector')"><span class="feat-icon">🏭</span><div class="feat-title">Benchmark Sectorial</div><div class="feat-desc">Vs promedios del sector</div><div class="feat-tog"></div></div>
-    <div class="feat-card" id="bf-sentiment" onclick="bToggleFeat('sentiment')"><span class="feat-icon">📰</span><div class="feat-title">Contexto de Mercado</div><div class="feat-desc">Noticias y macro</div><div class="feat-tog"></div></div>
-    <div class="feat-card" id="bf-export" onclick="bExport()"><span class="feat-icon">📤</span><div class="feat-title">Exportar JSON</div><div class="feat-desc">Descargá el análisis</div><div class="feat-tog" style="display:none"></div></div>
+    <div class="feat-card on"  id="bf-ratios"    onclick="bToggleFeat('ratios')"><span class="feat-icon">📊</span><div class="feat-title">Ratios Financieros</div><div class="feat-desc">Con semáforo BUENO/NEUTRO/ALERTA</div><div class="feat-tog"></div></div>
+    <div class="feat-card on"  id="bf-risks"     onclick="bToggleFeat('risks')"><span class="feat-icon">⚠️</span><div class="feat-title">Riesgos & Oportunidades</div><div class="feat-desc">Alertas automáticas</div><div class="feat-tog"></div></div>
+    <div class="feat-card on"  id="bf-compare"   onclick="bToggleFeat('compare')"><span class="feat-icon">📈</span><div class="feat-title">Evolución Histórica</div><div class="feat-desc">Tendencias por período</div><div class="feat-tog"></div></div>
+    <div class="feat-card"     id="bf-dcf"       onclick="bToggleFeat('dcf')"><span class="feat-icon">💰</span><div class="feat-title">Valuación DCF</div><div class="feat-desc">Valor intrínseco estimado</div><div class="feat-tog"></div></div>
+    <div class="feat-card"     id="bf-altman"    onclick="bToggleFeat('altman')"><span class="feat-icon">🔬</span><div class="feat-title">Altman Z-Score</div><div class="feat-desc">Probabilidad de quiebra</div><div class="feat-tog"></div></div>
+    <div class="feat-card"     id="bf-sector"    onclick="bToggleFeat('sector')"><span class="feat-icon">🏭</span><div class="feat-title">Benchmark Sectorial</div><div class="feat-desc">Vs promedios del sector</div><div class="feat-tog"></div></div>
+    <div class="feat-card"     id="bf-sentiment" onclick="bToggleFeat('sentiment')"><span class="feat-icon">📰</span><div class="feat-title">Contexto de Mercado</div><div class="feat-desc">Noticias y macro</div><div class="feat-tog"></div></div>
+    <div class="feat-card"     id="bf-export"    onclick="bExport()"><span class="feat-icon">📤</span><div class="feat-title">Exportar JSON</div><div class="feat-desc">Descargá el análisis</div><div class="feat-tog" style="display:none"></div></div>
   </div>
 
   <div class="loading-wrap" id="b-loading">
@@ -907,14 +908,40 @@ nav {
         <button class="btn-secondary" onclick="bClearResults()">✕ Cerrar</button>
       </div>
     </div>
-    <div class="score-grid" id="b-score-grid" style="display:none">
-      <div class="score-card"><div class="score-label">Calificación</div><div class="score-val score-B" id="b-score-val">—</div><div class="score-sub" id="b-score-sub"></div></div>
+    <!-- Score + verdict banner -->
+    <div id="b-score-grid" class="score-grid" style="display:none">
+      <div class="score-card">
+        <div class="score-label">Calificación</div>
+        <div class="score-val score-B" id="b-score-val">—</div>
+        <div class="score-sub" id="b-score-sub"></div>
+      </div>
       <div class="kpi-grid" id="b-kpi-grid"></div>
+    </div>
+    <!-- Ratio semaphore table -->
+    <div id="b-ratio-table-wrap" style="display:none;margin-bottom:16px">
+      <div style="font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:12px">// Ratios — Semáforo de Salud Financiera</div>
+      <div style="overflow-x:auto">
+        <table id="b-ratio-table" style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr>
+              <th style="padding:9px 14px;text-align:left;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:1px solid var(--border2);white-space:nowrap">CATEGORÍA</th>
+              <th style="padding:9px 14px;text-align:left;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:1px solid var(--border2)">RATIO</th>
+              <th style="padding:9px 14px;text-align:left;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:1px solid var(--border2)">QUÉ MIDE</th>
+              <th style="padding:9px 14px;text-align:center;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:1px solid var(--border2)">VALOR</th>
+              <th style="padding:9px 14px;text-align:center;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:1px solid var(--border2)">● BUENO</th>
+              <th style="padding:9px 14px;text-align:center;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:1px solid var(--border2)">● NEUTRO</th>
+              <th style="padding:9px 14px;text-align:center;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:1px solid var(--border2)">● ALERTA</th>
+            </tr>
+          </thead>
+          <tbody id="b-ratio-tbody"></tbody>
+        </table>
+      </div>
     </div>
     <div class="an-grid" id="b-an-blocks"></div>
   </div>
 </div>
 </div>
+
 
 <!-- ════════════════════════════════════
      CHARTS
@@ -1191,11 +1218,35 @@ loadHeroTicker();
 
 // ══════════════════════════════════════════
 // BALANCE ANALYZER
+
+// ══════════════════════════════════════════
+// BALANCE ANALYZER — MODULE 01
 // ══════════════════════════════════════════
 let bMode = 'usa';
 let bFeatures = new Set(['ratios','risks','compare']);
 let bFileData = null, bFileName = null, bFileType = null;
 let bLastData = null;
+
+// ── Ratio reference table (matches image) ──
+const RATIO_REF = [
+  {cat:'Valuación',     key:'pe',      name:'P/E',            desc:'Precio / Ganancia',    good:'< 15x',   neutral:'15–25x',  alert:'> 30x',   goodFn: v=>v<15, alertFn: v=>v>30},
+  {cat:'Valuación',     key:'pb',      name:'P/B',            desc:'Precio / Libro',       good:'< 1.5x',  neutral:'1.5–3x',  alert:'> 4x',    goodFn: v=>v<1.5, alertFn: v=>v>4},
+  {cat:'Valuación',     key:'evEbitda',name:'EV/EBITDA',      desc:'EV / EBITDA',          good:'< 7x',    neutral:'7–12x',   alert:'> 15x',   goodFn: v=>v<7, alertFn: v=>v>15},
+  {cat:'Valuación',     key:'pfcf',    name:'P/FCF',          desc:'Precio / FCF',         good:'< 15x',   neutral:'15–25x',  alert:'> 30x',   goodFn: v=>v<15, alertFn: v=>v>30},
+  {cat:'Valuación',     key:'peg',     name:'PEG',            desc:'P/E / Crecimiento',    good:'< 1x',    neutral:'1–2x',    alert:'> 2x',    goodFn: v=>v<1, alertFn: v=>v>2},
+  {cat:'Rentabilidad',  key:'roe',     name:'ROE',            desc:'Return on Equity',     good:'> 20%',   neutral:'10–20%',  alert:'< 8%',    goodFn: v=>v>20, alertFn: v=>v<8},
+  {cat:'Rentabilidad',  key:'roa',     name:'ROA',            desc:'Return on Assets',     good:'> 10%',   neutral:'5–10%',   alert:'< 3%',    goodFn: v=>v>10, alertFn: v=>v<3},
+  {cat:'Rentabilidad',  key:'ebitdaMargin',name:'Mg. EBITDA', desc:'EBITDA / Ventas',      good:'> 25%',   neutral:'15–25%',  alert:'< 10%',   goodFn: v=>v>25, alertFn: v=>v<10},
+  {cat:'Rentabilidad',  key:'netMargin',name:'Mg. Neto',      desc:'Gan. Neta / Ventas',   good:'> 15%',   neutral:'5–15%',   alert:'< 0%',    goodFn: v=>v>15, alertFn: v=>v<0},
+  {cat:'Deuda',         key:'deudaEbitda',name:'Deuda/EBITDA',desc:'Deuda Neta / EBITDA',  good:'< 2x',    neutral:'2–4x',    alert:'> 4x',    goodFn: v=>v<2, alertFn: v=>v>4},
+  {cat:'Deuda',         key:'icr',     name:'ICR',            desc:'EBIT / Intereses',     good:'> 4x',    neutral:'1.5–4x',  alert:'< 1.5x',  goodFn: v=>v>4, alertFn: v=>v<1.5},
+  {cat:'Deuda',         key:'de',      name:'D/E',            desc:'Deuda / Patrimonio',   good:'< 1x',    neutral:'1–2x',    alert:'> 3x',    goodFn: v=>v<1, alertFn: v=>v>3},
+  {cat:'Liquidez',      key:'currentRatio',name:'Current Ratio',desc:'Activo C / Pasivo C',good:'> 2x',   neutral:'1–2x',    alert:'< 1x',    goodFn: v=>v>2, alertFn: v=>v<1},
+  {cat:'Liquidez',      key:'quickRatio',name:'Quick Ratio',  desc:'(Act-Inv) / Pas C',    good:'> 1.2x',  neutral:'0.8–1.2x',alert:'< 0.8x',  goodFn: v=>v>1.2, alertFn: v=>v<0.8},
+  {cat:'Crecimiento',   key:'cagrEps', name:'CAGR EPS (3y)', desc:'Crecim. EPS anual',    good:'> 15%',   neutral:'5–15%',   alert:'< 0%',    goodFn: v=>v>15, alertFn: v=>v<0},
+  {cat:'Por acción',    key:'divYield',name:'Dividend Yield', desc:'Divid. / Precio',      good:'> 4%',    neutral:'1–4%',    alert:'0%',      goodFn: v=>v>4, alertFn: v=>v===0},
+  {cat:'Por acción',    key:'payout',  name:'Payout Ratio',   desc:'Divid. / EPS',         good:'< 60%',   neutral:'60–80%',  alert:'> 100%',  goodFn: v=>v<60, alertFn: v=>v>100},
+];
 
 function bSwitchMode(m) {
   bMode = m;
@@ -1213,7 +1264,7 @@ function bToggleFeat(id) {
   else { bFeatures.add(id); card.classList.add('on'); }
 }
 
-// Upload
+// ── File Upload ──
 function bHandleFile(e) {
   const file = e.target.files[0]; if (!file) return;
   bFileName = file.name;
@@ -1223,13 +1274,22 @@ function bHandleFile(e) {
   if (ext === 'pdf') { bFileType = 'pdf'; icEl.textContent = '📄'; fnEl.style.color = 'var(--cyan)'; }
   else if (['xlsx','xls'].includes(ext)) { bFileType = 'excel'; icEl.textContent = '📊'; fnEl.style.color = 'var(--green)'; }
   else { bFileType = 'csv'; icEl.textContent = '📋'; fnEl.style.color = 'var(--amber)'; }
-  fnEl.textContent = '✓ ' + file.name; fnEl.style.display = 'block';
+  fnEl.textContent = '⏳ Procesando ' + file.name + '...';
+  fnEl.style.display = 'block';
   const reader = new FileReader();
   if (bFileType === 'pdf') {
-    reader.onload = ev => { bFileData = ev.target.result.split(',')[1]; };
+    reader.onload = ev => {
+      bFileData = ev.target.result.split(',')[1];
+      fnEl.textContent = '✓ ' + file.name + ' (PDF listo)';
+    };
+    reader.onerror = () => { fnEl.textContent = '⚠ Error leyendo PDF'; bFileData = null; };
     reader.readAsDataURL(file);
   } else if (bFileType === 'csv') {
-    reader.onload = ev => { bFileData = ev.target.result; };
+    reader.onload = ev => {
+      bFileData = ev.target.result;
+      fnEl.textContent = '✓ ' + file.name + ' (' + bFileData.split('\n').length + ' filas)';
+    };
+    reader.onerror = () => { fnEl.textContent = '⚠ Error leyendo CSV'; bFileData = null; };
     reader.readAsText(file);
   } else {
     reader.onload = ev => {
@@ -1244,18 +1304,22 @@ function bHandleFile(e) {
         fnEl.textContent = '✓ ' + file.name + ' (' + wb.SheetNames.length + ' hojas)';
       } catch(err) { fnEl.textContent = '⚠ Error: ' + err.message; bFileData = null; }
     };
+    reader.onerror = () => { fnEl.textContent = '⚠ Error leyendo Excel'; bFileData = null; };
     reader.readAsArrayBuffer(file);
   }
 }
 
 // Drag & drop
-const bZone = document.getElementById('bupload-zone');
-bZone.addEventListener('dragover', e => { e.preventDefault(); bZone.classList.add('drag'); });
-bZone.addEventListener('dragleave', () => bZone.classList.remove('drag'));
-bZone.addEventListener('drop', e => {
-  e.preventDefault(); bZone.classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) { document.getElementById('ar-file').files = e.dataTransfer.files; bHandleFile({ target: { files: e.dataTransfer.files } }); }
+document.addEventListener('DOMContentLoaded', () => {
+  const bZone = document.getElementById('bupload-zone');
+  if (!bZone) return;
+  bZone.addEventListener('dragover', e => { e.preventDefault(); bZone.classList.add('drag'); });
+  bZone.addEventListener('dragleave', () => bZone.classList.remove('drag'));
+  bZone.addEventListener('drop', e => {
+    e.preventDefault(); bZone.classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file) { document.getElementById('ar-file').files = e.dataTransfer.files; bHandleFile({ target: { files: e.dataTransfer.files } }); }
+  });
 });
 
 function bClearAR() {
@@ -1269,7 +1333,7 @@ function bClearAR() {
   bClearResults();
 }
 
-// Loading
+// ── Loading ──
 async function bRunLoading(steps) {
   const wrap = document.getElementById('b-loading');
   const fill = document.getElementById('b-loading-fill');
@@ -1287,11 +1351,11 @@ async function bRunLoading(steps) {
   }
 }
 function bHideLoading() { document.getElementById('b-loading').classList.remove('show'); }
-function bShowError(m) { const el = document.getElementById('b-error'); el.textContent = '⚠ '+m; el.classList.add('show'); }
+function bShowError(m) { const el = document.getElementById('b-error'); el.textContent = '⚠ '+m; el.classList.add('show'); bHideLoading(); }
 function bHideError() { document.getElementById('b-error').classList.remove('show'); }
 function sleep(ms) { return new Promise(r => setTimeout(r,ms)); }
 
-// Analyze USA
+// ── ANALYZE USA via Vercel proxy ──
 async function bAnalyzeUSA() {
   bHideError(); bClearResults();
   const ticker = document.getElementById('usa-ticker').value.trim().toUpperCase();
@@ -1299,141 +1363,240 @@ async function bAnalyzeUSA() {
   const limit  = document.getElementById('usa-limit').value;
   const apiKey = document.getElementById('usa-apikey').value.trim();
   if (!ticker) return bShowError('Ingresá al menos un ticker.');
-  if (!apiKey)  return bShowError('Necesitás una API Key de FMP.');
+  if (!apiKey)  return bShowError('Necesitás una API Key de FMP (gratis en financialmodelingprep.com).');
   const btn = document.getElementById('bbtn-usa'); btn.disabled = true;
-  const steps = ['Conectando con FMP API','Descargando estados financieros','Calculando ratios','Analizando con IA'];
-  if (bFeatures.has('sector')) steps.push('Benchmarks sectoriales');
-  if (bFeatures.has('dcf'))    steps.push('Valuación DCF');
+  const steps = ['Conectando con FMP API','Descargando balance sheet','Descargando income statement','Descargando cash flow','Calculando ratios','Analizando con IA'];
+  if (bFeatures.has('dcf')) steps.push('Valuación DCF');
+  if (bFeatures.has('altman')) steps.push('Altman Z-Score');
   await bRunLoading(steps);
   try {
-    const [balRes,incRes,cfRes,profRes] = await Promise.all([
-      fetch(`https://financialmodelingprep.com/api/v3/balance-sheet-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
-      fetch(`https://financialmodelingprep.com/api/v3/income-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
-      fetch(`https://financialmodelingprep.com/api/v3/cash-flow-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
-      fetch(`https://financialmodelingprep.com/api/v3/profile/${ticker}?apikey=${apiKey}`)
+    const base = `https://financialmodelingprep.com/api/v3`;
+    // Use Vercel proxy to avoid CORS
+    const [balRes, incRes, cfRes, metrRes] = await Promise.all([
+      fetchFMP(`${base}/balance-sheet-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
+      fetchFMP(`${base}/income-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
+      fetchFMP(`${base}/cash-flow-statement/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`),
+      fetchFMP(`${base}/key-metrics/${ticker}?period=${period}&limit=${limit}&apikey=${apiKey}`)
     ]);
-    const [bal,inc,cf,prof] = await Promise.all([balRes.json(),incRes.json(),cfRes.json(),profRes.json()]);
-    if (!Array.isArray(bal) || bal.length===0) { bHideLoading(); btn.disabled=false; return bShowError('No se encontraron datos para "'+ticker+'".'); }
-    if (bal?.['Error Message']) { bHideLoading(); btn.disabled=false; return bShowError('API Key inválida.'); }
-    const name = prof?.[0]?.companyName || ticker;
-    const sector = prof?.[0]?.sector || 'N/A';
-    const fmtN = v => v!=null ? (v/1e6).toFixed(1)+'M' : 'N/A';
-    const b0=bal[0]||{}, i0=inc[0]||{}, cf0=cf[0]||{};
-    let ds = `EMPRESA: ${name} (${ticker})\nSECTOR: ${sector}\nPRECIO: $${prof?.[0]?.price||'N/A'} | MKTCAP: ${fmtN(prof?.[0]?.mktCap)}\n\nBALANCE (${b0.date||'N/A'}):\nActivos: ${fmtN(b0.totalAssets)} | Pasivos: ${fmtN(b0.totalLiabilities)} | PN: ${fmtN(b0.totalStockholdersEquity)}\nCaja: ${fmtN(b0.cashAndCashEquivalents)} | Deuda: ${fmtN(b0.totalDebt)}\n\nRESULTADOS:\nIngresos: ${fmtN(i0.revenue)} | EBITDA: ${fmtN(i0.ebitda)} | Neto: ${fmtN(i0.netIncome)}\nMargen bruto: ${i0.grossProfitRatio?((i0.grossProfitRatio)*100).toFixed(1)+'%':'N/A'}\n\nFLUJO DE CAJA:\nOperaciones: ${fmtN(cf0.operatingCashFlow)} | FCF: ${fmtN(cf0.freeCashFlow)} | CAPEX: ${fmtN(cf0.capitalExpenditure)}`;
-    if (inc.length>1) { ds += '\n\nTENDENCIA:'; inc.slice(0,4).forEach(p => { ds += `\n${p.date}: Rev ${fmtN(p.revenue)}, Net ${fmtN(p.netIncome)}`; }); }
+    if (!balRes?.[0]) return bShowError('Sin datos para ' + ticker + '. Verificá el ticker y tu API key.');
+    const dataStr = `TICKER: ${ticker}\nPERÍODO: ${period} (últimos ${limit})\n\n=== BALANCE SHEET ===\n${JSON.stringify(balRes.slice(0,4),null,2)}\n\n=== INCOME STATEMENT ===\n${JSON.stringify(incRes.slice(0,4),null,2)}\n\n=== CASH FLOW ===\n${JSON.stringify(cfRes.slice(0,4),null,2)}\n\n=== KEY METRICS ===\n${JSON.stringify(metrRes.slice(0,4),null,2)}`;
+    const prompt = bBuildPrompt(dataStr, 'usa');
     bHideLoading();
-    await bCallAI(bBuildPrompt(ds), `${ticker} — ${name}`);
-  } catch(e) { bHideLoading(); bShowError('Error de conexión: '+e.message); }
+    const res = await fetch('/api/claude', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt, max_tokens:4000 })
+    });
+    if (!res.ok) { const e=await res.json().catch(()=>({})); return bShowError('Error API Claude: '+(e?.error?.message||res.status)); }
+    const data = await res.json();
+    bRenderResults(data.content?.map(c=>c.text||'').join('') || '', ticker);
+  } catch(e) { bShowError('Error: '+e.message); }
   btn.disabled = false;
 }
 
-// Analyze AR
+async function fetchFMP(url) {
+  // Route through Vercel proxy to avoid CORS
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+  const res = await fetch(proxyUrl);
+  if (!res.ok) throw new Error(`FMP error ${res.status}`);
+  return res.json();
+}
+
+// ── ANALYZE ARG (PDF / Excel / CSV) ──
 async function bAnalyzeAR() {
   bHideError(); bClearResults();
   const company = document.getElementById('ar-company').value.trim();
   const period  = document.getElementById('ar-period').value.trim();
   const context = document.getElementById('ar-context').value.trim();
-  if (!company)    return bShowError('Ingresá el nombre de la empresa.');
-  if (!bFileData)  return bShowError('Subí el balance (PDF, Excel o CSV).');
+  if (!company) return bShowError('Ingresá el nombre de la empresa.');
+  if (!bFileData) return bShowError('Subí el balance (PDF, Excel o CSV) primero.');
   const btn = document.getElementById('bbtn-ar'); btn.disabled = true;
-  await bRunLoading(['Procesando archivo','Extrayendo datos','Calculando ratios','Analizando con IA']);
-  let ds = `EMPRESA: ${company}\nPERÍODO: ${period||'N/E'}\nCONTEXTO: ${context||'Sin contexto adicional'}\nNORMATIVA: NIIF Argentina / CNV / BYMA`;
-  const prompt = bBuildPrompt(ds);
+  await bRunLoading(['Procesando archivo','Extrayendo datos financieros','Calculando ratios','Analizando con IA']);
+  const dataContext = `EMPRESA: ${company}\nPERÍODO: ${period||'No especificado'}\nCONTEXTO ADICIONAL: ${context||'Sin contexto adicional'}\nNORMATIVA: NIIF Argentina / CNV / BYMA`;
+  const prompt = bBuildPrompt(dataContext, 'arg');
   bHideLoading();
-  const title = `${company}${period ? ' — '+period : ''}`;
   try {
-    let msgContent;
+    let body;
     if (bFileType === 'pdf') {
-      msgContent = [
-        { type:'document', source:{ type:'base64', media_type:'application/pdf', data:bFileData } },
-        { type:'text', text: prompt }
-      ];
+      // Send as multipart message with PDF document
+      body = JSON.stringify({
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: bFileData } },
+            { type: 'text', text: prompt }
+          ]
+        }],
+        max_tokens: 4000
+      });
     } else {
-      msgContent = prompt + `\n\n=== DATOS DEL ARCHIVO: ${bFileName} ===\n${bFileData}`;
+      // Excel/CSV: append text data to prompt
+      const fullPrompt = prompt + `\n\n=== DATOS DEL ARCHIVO: ${bFileName} ===\n${bFileData.slice(0, 15000)}`;
+      body = JSON.stringify({ prompt: fullPrompt, max_tokens: 4000 });
     }
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:4000, messages:[{ role:'user', content:msgContent }] })
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body
     });
-    if (!res.ok) { const e=await res.json().catch(()=>({})); return bShowError('Error API: '+(e?.error?.message||res.status)); }
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      return bShowError('Error API: ' + (errData?.error?.message || `Status ${res.status}`));
+    }
     const data = await res.json();
-    bRenderResults(data.content?.map(c=>c.text||'').join('') || '', title);
-  } catch(e) { bShowError('Error: '+e.message); }
+    const text = data.content?.map(c => c.text || '').join('') || '';
+    if (!text) return bShowError('La IA no devolvió respuesta. Intentá nuevamente.');
+    bRenderResults(text, `${company}${period ? ' — '+period : ''}`);
+  } catch(e) {
+    bShowError('Error al procesar: ' + e.message);
+  }
   btn.disabled = false;
 }
 
-function bBuildPrompt(dataSection) {
+// ── Prompt builder ──
+function bBuildPrompt(dataSection, mode) {
   const fi = [...bFeatures];
-  const ratioInstr = fi.includes('ratios') ? `\nRATIOS: incluir liquidez corriente, ácida, D/E, D/EBITDA, ROE, ROA, márgenes, rotaciones.` : '';
-  const riskInstr  = fi.includes('risks')  ? `\nRIESGOS: lista de riesgos y oportunidades con type risk/opportunity/neutral.` : '';
-  const cmpInstr   = fi.includes('compare')? `\nEVOLUCIÓN: analizar tendencias históricas.` : '';
-  const dcfInstr   = fi.includes('dcf')    ? `\nDCF: estimá rango de valor intrínseco (pesimista/base/optimista).` : '';
-  const altInstr   = fi.includes('altman') ? `\nALTMAN Z: calculá e interpretá el score.` : '';
-  const secInstr   = fi.includes('sector') ? `\nBENCHMARK: comparar vs sector.` : '';
-  const senInstr   = fi.includes('sentiment')? `\nCONTEXTO: comentar noticias y macro relevante.` : '';
-  return `Sos analista financiero senior. Analizá los siguientes datos en español.\n\n${dataSection}\n${ratioInstr}${riskInstr}${cmpInstr}${dcfInstr}${altInstr}${secInstr}${senInstr}\n\nResponde SOLO con JSON válido:\n{"company":"","ticker":"","period":"","score":"A/B+/B/C+/C/D","scoreLabel":"","summary":"","kpis":[{"name":"","value":"","delta":"","direction":"up/down/flat"}],"ratios":${fi.includes('ratios')?'{"key":"val"}':'null'},"strengths":[""],"risks":${fi.includes('risks')?'[{"type":"risk/opportunity/neutral","text":""}]':'null'},"periodComparison":${fi.includes('compare')?'"texto"':'null'},"dcf":${fi.includes('dcf')?'{"low":"","mid":"","high":"","analysis":""}':'null'},"altmanZ":${fi.includes('altman')?'{"score":0,"zone":"safe/grey/distress","interpretation":""}':'null'},"sectorBenchmark":${fi.includes('sector')?'"texto"':'null'},"sentiment":${fi.includes('sentiment')?'"texto"':'null'},"recommendation":""}`;
+  const ratioKeys = RATIO_REF.map(r=>r.key);
+  return `Sos analista financiero senior especialista en ${mode==='usa'?'empresas cotizantes NYSE/NASDAQ':'empresas argentinas (BYMA/CNV/NIIF)'}. Analizá los datos financieros en español.
+
+${dataSection}
+
+Respondé SOLO con JSON válido (sin texto antes ni después, sin bloques de código):
+{
+  "company": "nombre empresa",
+  "ticker": "ticker o vacío",
+  "period": "período analizado",
+  "score": "A/B+/B/C+/C/D",
+  "scoreLabel": "descripción del score",
+  "summary": "resumen ejecutivo 3-4 oraciones",
+  "kpis": [{"name":"","value":"","delta":"","direction":"up/down/flat"}],
+  "ratios": {
+    "pe": número_o_null,
+    "pb": número_o_null,
+    "evEbitda": número_o_null,
+    "pfcf": número_o_null,
+    "peg": número_o_null,
+    "roe": número_porcentaje_o_null,
+    "roa": número_porcentaje_o_null,
+    "ebitdaMargin": número_porcentaje_o_null,
+    "netMargin": número_porcentaje_o_null,
+    "deudaEbitda": número_o_null,
+    "icr": número_o_null,
+    "de": número_o_null,
+    "currentRatio": número_o_null,
+    "quickRatio": número_o_null,
+    "cagrEps": número_porcentaje_o_null,
+    "divYield": número_porcentaje_o_null,
+    "payout": número_porcentaje_o_null
+  },
+  "strengths": ["fortaleza 1","fortaleza 2","fortaleza 3"],
+  "risks": ${fi.includes('risks')? '[{"type":"risk/opportunity/neutral","text":"descripción"}]' : 'null'},
+  "periodComparison": ${fi.includes('compare')? '"texto análisis histórico"' : 'null'},
+  "dcf": ${fi.includes('dcf')? '{"low":"$XX","mid":"$XX","high":"$XX","analysis":"texto"}' : 'null'},
+  "altmanZ": ${fi.includes('altman')? '{"score":0.0,"zone":"safe/grey/distress","interpretation":"texto"}' : 'null'},
+  "sectorBenchmark": ${fi.includes('sector')? '"texto benchmark sectorial"' : 'null'},
+  "sentiment": ${fi.includes('sentiment')? '"texto contexto macro/mercado"' : 'null'},
+  "recommendation": "conclusión y perspectiva accionable"
 }
 
-async function bCallAI(prompt, title) {
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:4000, messages:[{ role:'user', content:prompt }] })
-    });
-    if (!res.ok) { const e=await res.json().catch(()=>({})); return bShowError('Error API: '+(e?.error?.message||res.status)); }
-    const data = await res.json();
-    bRenderResults(data.content?.map(c=>c.text||'').join('') || '', title);
-  } catch(e) { bShowError('Error: '+e.message); }
+IMPORTANTE: Los valores de ratios deben ser números (no strings). Para porcentajes, usar el número sin % (ej: ROE de 25% = 25). Si no tenés el dato, usar null.`;
 }
 
+// ── Render Results ──
 function bRenderResults(raw, title) {
   let p;
   try {
-    const clean = raw.replace(/```json|```/g,'').trim();
-    p = JSON.parse(clean.substring(clean.indexOf('{'), clean.lastIndexOf('}')+1));
-  } catch(e) { return bShowError('Error al parsear respuesta IA.'); }
+    const clean = raw.replace(/```json|```/gi,'').trim();
+    const jsonStr = clean.substring(clean.indexOf('{'), clean.lastIndexOf('}')+1);
+    p = JSON.parse(jsonStr);
+  } catch(e) {
+    return bShowError('Error al parsear respuesta IA. Intentá nuevamente.');
+  }
   bLastData = p;
-  document.getElementById('b-res-title').innerHTML = `${p.ticker||p.company} — <span>${p.company}</span>`;
+
+  document.getElementById('b-res-title').innerHTML = `${p.ticker ? '<span style="color:var(--cyan)">'+p.ticker+'</span> — ' : ''}${p.company||title}`;
+
+  // Score
   const sv = document.getElementById('b-score-val');
-  sv.textContent = p.score||'B';
-  sv.className = 'score-val score-' + (p.score?.[0]||'B');
-  document.getElementById('b-score-sub').textContent = p.scoreLabel||'';
+  sv.textContent = p.score || 'B';
+  sv.className = 'score-val score-' + (p.score?.[0] || 'B');
+  document.getElementById('b-score-sub').textContent = p.scoreLabel || '';
+
+  // KPIs
   document.getElementById('b-kpi-grid').innerHTML = (p.kpis||[]).map(k => {
     const dc = k.direction==='up'?'d-up':k.direction==='down'?'d-dn':'d-neu';
     const di = k.direction==='up'?'▲':k.direction==='down'?'▼':'→';
     return `<div class="kpi-card"><div class="kpi-name">${k.name}</div><div class="kpi-val">${k.value}</div>${k.delta?`<div class="kpi-delta ${dc}">${di} ${k.delta}</div>`:''}</div>`;
   }).join('');
   document.getElementById('b-score-grid').style.display = 'grid';
+
+  // ── Ratio semaphore table ──
+  if (p.ratios && Object.values(p.ratios).some(v=>v!==null)) {
+    const tbody = document.getElementById('b-ratio-tbody');
+    let lastCat = '';
+    tbody.innerHTML = RATIO_REF.map(ref => {
+      const val = p.ratios[ref.key];
+      if (val === null || val === undefined) return '';
+      const num = parseFloat(val);
+      const isGood = ref.goodFn(num);
+      const isAlert = !isGood && ref.alertFn(num);
+      const status = isGood ? 'good' : isAlert ? 'alert' : 'neutral';
+      const statusColor = status==='good' ? 'var(--green)' : status==='alert' ? 'var(--red)' : 'var(--amber)';
+      const statusBg = status==='good' ? 'rgba(0,200,83,0.1)' : status==='alert' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)';
+      const statusLabel = status==='good' ? '● BUENO' : status==='alert' ? '● ALERTA' : '● NEUTRO';
+      const catHeader = ref.cat !== lastCat ? `<tr><td colspan="7" style="padding:12px 14px 4px;font-size:10px;letter-spacing:.15em;color:var(--violet);text-transform:uppercase;font-weight:700;border-top:1px solid var(--border2)">${ref.cat}</td></tr>` : '';
+      lastCat = ref.cat;
+      const displayVal = ref.key.includes('Margin')||ref.key==='roe'||ref.key==='roa'||ref.key==='cagrEps'||ref.key==='divYield'||ref.key==='payout' ? num.toFixed(1)+'%' : num.toFixed(2)+'x';
+      return catHeader + `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:9px 14px;color:var(--dim);font-size:12px;white-space:nowrap">${ref.cat}</td>
+        <td style="padding:9px 14px;font-weight:700;color:var(--white);font-size:13px">${ref.name}</td>
+        <td style="padding:9px 14px;color:var(--dim);font-size:12px">${ref.desc}</td>
+        <td style="padding:9px 14px;text-align:center">
+          <span style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor};border-radius:4px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:16px;font-weight:700;letter-spacing:.05em">${displayVal}</span>
+        </td>
+        <td style="padding:9px 14px;text-align:center;font-size:11px;color:var(--green)">${ref.good}</td>
+        <td style="padding:9px 14px;text-align:center;font-size:11px;color:var(--amber)">${ref.neutral}</td>
+        <td style="padding:9px 14px;text-align:center">
+          <span style="font-size:12px;font-weight:700;color:${statusColor}">${statusLabel}</span>
+        </td>
+      </tr>`;
+    }).join('');
+    document.getElementById('b-ratio-table-wrap').style.display = 'block';
+  }
+
+  // Analysis blocks
   const blocks = document.getElementById('b-an-blocks'); blocks.innerHTML = '';
   blocks.innerHTML += `<div class="an-block full"><div class="block-title">📋 Resumen Ejecutivo</div><div class="an-text"><p>${p.summary||''}</p></div></div>`;
   if (p.strengths?.length) blocks.innerHTML += `<div class="an-block"><div class="block-title">✅ Fortalezas</div><div class="tag-list">${p.strengths.map(s=>`<div class="tag-item opportunity"><span class="tag-icon">+</span>${s}</div>`).join('')}</div></div>`;
   if (p.risks?.length) blocks.innerHTML += `<div class="an-block"><div class="block-title">⚠️ Riesgos & Oportunidades</div><div class="tag-list">${p.risks.map(r=>`<div class="tag-item ${r.type}"><span class="tag-icon">${r.type==='risk'?'⚠':r.type==='opportunity'?'◉':'→'}</span>${r.text}</div>`).join('')}</div></div>`;
-  if (p.ratios) blocks.innerHTML += `<div class="an-block"><div class="block-title">📊 Ratios Financieros</div><table class="ratio-table">${Object.entries(p.ratios).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table></div>`;
   if (p.periodComparison) blocks.innerHTML += `<div class="an-block"><div class="block-title">📈 Evolución Histórica</div><div class="an-text"><p>${p.periodComparison}</p></div></div>`;
-  if (p.dcf) blocks.innerHTML += `<div class="an-block"><div class="block-title">💰 Valuación DCF</div><div style="display:flex;gap:10px;margin-bottom:10px"><div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--red);margin-bottom:3px">PESIMISTA</div><div style="font-family:'Bebas Neue';font-size:20px;color:var(--red)">${p.dcf.low}</div></div><div style="flex:1;background:var(--bg);border:1px solid rgba(0,200,83,.3);border-radius:3px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--green);margin-bottom:3px">BASE</div><div style="font-family:'Bebas Neue';font-size:20px;color:var(--green)">${p.dcf.mid}</div></div><div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">OPTIMISTA</div><div style="font-family:'Bebas Neue';font-size:20px;color:var(--white)">${p.dcf.high}</div></div></div><div class="an-text"><p>${p.dcf.analysis}</p></div></div>`;
-  if (p.altmanZ) { const zc = p.altmanZ.zone==='safe'?'var(--green)':p.altmanZ.zone==='distress'?'var(--red)':'var(--amber)'; const zl = p.altmanZ.zone==='safe'?'ZONA SEGURA':p.altmanZ.zone==='distress'?'ZONA QUIEBRA':'ZONA GRIS'; blocks.innerHTML += `<div class="an-block"><div class="block-title">🔬 Altman Z-Score</div><div style="display:flex;align-items:center;gap:16px;margin-bottom:10px"><div style="font-family:'Bebas Neue';font-size:48px;color:${zc};line-height:1">${p.altmanZ.score}</div><div><div style="font-size:11px;font-weight:600;color:${zc};letter-spacing:.12em">${zl}</div><div style="font-size:10px;color:var(--dim);margin-top:3px">Z>2.9: Seguro · 1.8-2.9: Gris · <1.8: Riesgo</div></div></div><div class="an-text"><p>${p.altmanZ.interpretation}</p></div></div>`; }
+  if (p.dcf) blocks.innerHTML += `<div class="an-block"><div class="block-title">💰 Valuación DCF</div><div style="display:flex;gap:10px;margin-bottom:10px"><div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--red);margin-bottom:3px">PESIMISTA</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--red)">${p.dcf.low}</div></div><div style="flex:1;background:var(--bg);border:1px solid rgba(0,200,83,.3);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--green);margin-bottom:3px">BASE</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--green)">${p.dcf.mid}</div></div><div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">OPTIMISTA</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--white)">${p.dcf.high}</div></div></div><div class="an-text"><p>${p.dcf.analysis}</p></div></div>`;
+  if (p.altmanZ) { const zc = p.altmanZ.zone==='safe'?'var(--green)':p.altmanZ.zone==='distress'?'var(--red)':'var(--amber)'; const zl = p.altmanZ.zone==='safe'?'ZONA SEGURA':p.altmanZ.zone==='distress'?'ZONA QUIEBRA':'ZONA GRIS'; blocks.innerHTML += `<div class="an-block"><div class="block-title">🔬 Altman Z-Score</div><div style="display:flex;align-items:center;gap:16px;margin-bottom:10px"><div style="font-family:'Bebas Neue';font-size:48px;color:${zc};line-height:1">${p.altmanZ.score}</div><div><div style="font-size:11px;font-weight:600;color:${zc};letter-spacing:.12em">${zl}</div><div style="font-size:10px;color:var(--dim);margin-top:3px">Z>2.9: Seguro · 1.8–2.9: Gris · <1.8: Riesgo</div></div></div><div class="an-text"><p>${p.altmanZ.interpretation}</p></div></div>`; }
   if (p.sectorBenchmark) blocks.innerHTML += `<div class="an-block"><div class="block-title">🏭 Benchmark Sectorial</div><div class="an-text"><p>${p.sectorBenchmark}</p></div></div>`;
   if (p.sentiment) blocks.innerHTML += `<div class="an-block"><div class="block-title">📰 Contexto de Mercado</div><div class="an-text"><p>${p.sentiment}</p></div></div>`;
-  if (p.recommendation) blocks.innerHTML += `<div class="an-block full"><div class="block-title">🎯 Conclusión</div><div class="an-text"><p>${p.recommendation}</p></div></div>`;
+  if (p.recommendation) blocks.innerHTML += `<div class="an-block full"><div class="block-title">🎯 Conclusión & Recomendación</div><div class="an-text"><p>${p.recommendation}</p></div></div>`;
+
   document.getElementById('b-results').classList.add('show');
   document.getElementById('b-results').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 function bClearResults() {
   document.getElementById('b-results').classList.remove('show');
-  document.getElementById('b-an-blocks').innerHTML = '';
-  document.getElementById('b-kpi-grid').innerHTML = '';
   document.getElementById('b-score-grid').style.display = 'none';
-  bLastData = null;
+  document.getElementById('b-ratio-table-wrap').style.display = 'none';
+  document.getElementById('b-an-blocks').innerHTML = '';
+  bHideLoading(); bHideError();
 }
 
 function bExport() {
   if (!bLastData) return;
-  const blob = new Blob([JSON.stringify(bLastData,null,2)], {type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `equityks_balance_${(bLastData.ticker||bLastData.company||'report').toLowerCase()}_${new Date().toISOString().slice(0,10)}.json`;
+  const blob = new Blob([JSON.stringify(bLastData, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `equityks_${bLastData.ticker||bLastData.company||'analysis'}_${Date.now()}.json`;
   a.click();
 }
+
+
 
 // ══════════════════════════════════════════
 // CHARTS MODULE
