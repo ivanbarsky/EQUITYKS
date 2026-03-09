@@ -688,6 +688,7 @@ nav {
     <div class="nav-link" onclick="showPage('charts')">Gráficos</div>
     <div class="nav-link" onclick="showPage('calendar')">Calendario</div>
     <div class="nav-link" onclick="showPage('sectors')">Sectores</div>
+    <div class="nav-link" onclick="showPage('capital')">Capital Flow</div>
   </div>
   <div class="nav-right">
     <div class="nav-status"><div class="status-dot"></div>LIVE</div>
@@ -759,6 +760,19 @@ nav {
         </div>
         <div class="card-arrow">↗</div>
       </div>
+      <div class="module-card" style="border-color:var(--cyan);grid-column:1/-1" onclick="showPage('capital')">
+        <div class="card-num" style="color:var(--cyan)">05</div>
+        <div class="card-title">Capital Flow Intelligence</div>
+        <div class="card-desc">Detectá dónde se posiciona el Smart Money. Acumulación/distribución institucional, rotación sectorial en mapa de burbujas, market breadth y news sentiment con impacto de volumen.</div>
+        <div class="card-tags">
+          <span class="tag">Smart Money</span>
+          <span class="tag">Rotación Sectorial</span>
+          <span class="tag">Market Breadth</span>
+          <span class="tag">News Sentiment</span>
+        </div>
+        <div class="card-arrow">↗</div>
+      </div>
+
     </div>
 
     <div class="ticker-bar" id="hero-ticker" style="display:none;margin-top:24px">
@@ -1122,7 +1136,7 @@ function showPage(id) {
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   const links = document.querySelectorAll('.nav-link');
-  const map = { home:0, balance:1, charts:2, calendar:3, sectors:4 };
+  const map = { home:0, balance:1, charts:2, calendar:3, sectors:4, capital:5 };
   if (map[id] !== undefined) links[map[id]].classList.add('active');
   currentPage = id;
   window.scrollTo(0, 0);
@@ -2343,7 +2357,1005 @@ async function loadSectorNews(sector) {
 }
 
 // ── INIT ──
+
+
+// ══════════════════════════════════════════════════════════
+// CAPITAL FLOW INTELLIGENCE — MODULE 05
+// ══════════════════════════════════════════════════════════
+
+let cfTab = 'accum';
+let cfData = null;
+let rotData = {};
+
+function setCFTab(tab) {
+  cfTab = tab;
+  ['accum','rotation','breadth','sentiment'].forEach(t => {
+    const panel = document.getElementById('cft-panel-' + t);
+    const tabEl = document.getElementById('cft-tab-' + t);
+    if(panel) panel.style.display = t === tab ? 'block' : 'none';
+    if(tabEl) tabEl.classList.toggle('active', t === tab);
+  });
+  if(tab === 'rotation' && Object.keys(rotData).length === 0) loadSectorRotation();
+  if(tab === 'breadth') loadBreadth();
+}
+
+function cfQuick(sym) {
+  document.getElementById('cf-ticker').value = sym;
+  runAccumAnalysis();
+}
+function sentQuick(sym) {
+  document.getElementById('sent-ticker').value = sym;
+  runSentiment();
+}
+
+// ── MATH HELPERS ──
+function calcCMF(ohlcv, period=20) {
+  // Chaikin Money Flow
+  const result = [];
+  for(let i=period-1; i<ohlcv.length; i++) {
+    let mfvSum=0, volSum=0;
+    for(let j=i-period+1; j<=i; j++) {
+      const {h,l,c,v} = ohlcv[j];
+      if(h===l) continue;
+      const mfm = ((c-l)-(h-c))/(h-l);
+      mfvSum += mfm * v;
+      volSum += v;
+    }
+    result.push({ i, val: volSum ? mfvSum/volSum : 0 });
+  }
+  return result;
+}
+
+function calcOBV(ohlcv) {
+  let obv = 0;
+  return ohlcv.map((d,i) => {
+    if(i===0) return { i, val:0 };
+    obv += d.c > ohlcv[i-1].c ? d.v : d.c < ohlcv[i-1].c ? -d.v : 0;
+    return { i, val: obv };
+  });
+}
+
+function detectBlockTrades(ohlcv, threshold=2.0) {
+  const vols = ohlcv.map(d=>d.v);
+  const avg = vols.reduce((a,b)=>a+b,0)/vols.length;
+  const blocks = [];
+  ohlcv.forEach((d,i) => {
+    if(d.v > avg * threshold) {
+      const bullish = d.c > d.o;
+      const bodyPct = Math.abs(d.c-d.o)/(d.h-d.l||1);
+      blocks.push({ i, date: d.t, vol: d.v, avgMult: (d.v/avg).toFixed(1), bullish, bodyPct, price: d.c });
+    }
+  });
+  return blocks.slice(-8); // last 8 block trades
+}
+
+function calcDarkPoolProxy(ohlcv) {
+  // Dark pool proxy: days where price moves little but volume is high
+  // suggests large orders being absorbed quietly
+  const vols = ohlcv.map(d=>d.v);
+  const avgVol = vols.reduce((a,b)=>a+b,0)/vols.length;
+  let accumDays=0, distribDays=0;
+  const signals = [];
+  ohlcv.slice(-30).forEach((d,i) => {
+    const priceChange = Math.abs(d.c-d.o)/d.o;
+    const volRatio = d.v/avgVol;
+    if(volRatio > 1.5 && priceChange < 0.005) {
+      // High volume, little price movement = institutional absorption
+      const isBuying = d.c >= d.o;
+      if(isBuying) accumDays++; else distribDays++;
+      signals.push({ type: isBuying ? 'ACUM' : 'DIST', volRatio: volRatio.toFixed(1), price: d.c, date: d.t });
+    }
+  });
+  return { accumDays, distribDays, signals: signals.slice(-5) };
+}
+
+// ── CANVAS DRAWING ──
+function drawPriceChart(canvas, ohlcv, cmf) {
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  ctx.clearRect(0,0,W,H);
+
+  const prices = ohlcv.map(d=>d.c);
+  const minP = Math.min(...prices), maxP = Math.max(...prices);
+  const priceH = H * 0.65;
+  const cmfH = H * 0.28;
+  const pad = 10;
+
+  // Price line
+  ctx.beginPath();
+  ctx.strokeStyle = '#7c3aed';
+  ctx.lineWidth = 1.5;
+  prices.forEach((p,i) => {
+    const x = pad + (i/(prices.length-1))*(W-pad*2);
+    const y = priceH - pad - ((p-minP)/(maxP-minP||1))*(priceH-pad*2);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Fill under price
+  ctx.lineTo(W-pad, priceH); ctx.lineTo(pad, priceH);
+  ctx.fillStyle = 'rgba(124,58,237,0.08)';
+  ctx.fill();
+
+  // Price labels
+  ctx.fillStyle = '#475569';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.fillText('$'+maxP.toFixed(2), W-60, pad+10);
+  ctx.fillText('$'+minP.toFixed(2), W-60, priceH-pad);
+
+  // CMF area
+  const cmfY0 = priceH + 20;
+  const cmfVals = cmf.map(d=>d.val);
+  const maxCMF = Math.max(Math.abs(Math.min(...cmfVals)), Math.abs(Math.max(...cmfVals)), 0.01);
+  const midY = cmfY0 + cmfH/2;
+
+  // Zero line
+  ctx.beginPath(); ctx.strokeStyle='#1a2035'; ctx.lineWidth=1;
+  ctx.moveTo(pad, midY); ctx.lineTo(W-pad, midY); ctx.stroke();
+
+  // CMF bars
+  const bw = (W-pad*2)/cmf.length;
+  cmf.forEach((d,i) => {
+    const x = pad + i*bw;
+    const barH = (d.val/maxCMF)*(cmfH/2);
+    ctx.fillStyle = d.val >= 0 ? 'rgba(0,200,83,0.7)' : 'rgba(239,68,68,0.7)';
+    ctx.fillRect(x, d.val>=0 ? midY-barH : midY, bw-1, Math.abs(barH));
+  });
+
+  // CMF label
+  ctx.fillStyle = '#475569';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.fillText('CMF(20)', pad, cmfY0+10);
+  const lastCMF = cmfVals[cmfVals.length-1];
+  ctx.fillStyle = lastCMF>=0 ? '#00c853' : '#ef4444';
+  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.fillText(lastCMF.toFixed(3), pad+60, cmfY0+10);
+}
+
+function drawOBVChart(canvas, ohlcv, obv) {
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  ctx.clearRect(0,0,W,H);
+  const pad = 10;
+  const vals = obv.map(d=>d.val);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 1.5;
+  vals.forEach((v,i) => {
+    const x = pad + (i/(vals.length-1))*(W-pad*2);
+    const y = H-pad - ((v-minV)/(maxV-minV||1))*(H-pad*2);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.lineTo(W-pad,H); ctx.lineTo(pad,H);
+  ctx.fillStyle = 'rgba(6,182,212,0.08)'; ctx.fill();
+
+  // Trend arrow
+  const trend = vals[vals.length-1] > vals[Math.floor(vals.length*0.7)] ? '↗ ACUMULANDO' : '↘ DISTRIBUYENDO';
+  const col = trend.includes('ACUM') ? '#00c853' : '#ef4444';
+  ctx.fillStyle = col;
+  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.fillText('OBV ' + trend, pad, 18);
+}
+
+function drawBubbleChart(canvas, sectors) {
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.parentElement.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const W = canvas.parentElement.offsetWidth;
+  const H = canvas.parentElement.offsetHeight;
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle = '#1a2035'; ctx.lineWidth = 1;
+  [0.25,0.5,0.75].forEach(t => {
+    ctx.beginPath(); ctx.moveTo(W*t,20); ctx.lineTo(W*t,H-30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(40,H*t); ctx.lineTo(W-10,H*t); ctx.stroke();
+  });
+
+  // Axis labels
+  ctx.fillStyle = '#334155'; ctx.font = '10px JetBrains Mono, monospace';
+  ctx.fillText('← Outperform', 45, H-8);
+  ctx.fillText('Underperform →', W-130, H-8);
+  ctx.save(); ctx.translate(14, H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Momentum ↑', -30, 0); ctx.restore();
+
+  // Zero lines
+  ctx.strokeStyle = '#222840'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(W/2,20); ctx.lineTo(W/2,H-30); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(40,H/2); ctx.lineTo(W-10,H/2); ctx.stroke();
+
+  const mos = sectors.map(s=>parseFloat(s.mo1));
+  const moms = sectors.map(s=>s.momentum);
+  const maxMo = Math.max(...mos.map(Math.abs), 1);
+  const maxMom = Math.max(...moms.map(Math.abs), 1);
+
+  sectors.forEach(s => {
+    const x = W/2 + (parseFloat(s.mo1)/maxMo)*(W/2-50);
+    const y = H/2 - (s.momentum/maxMom)*(H/2-40);
+    const r = 18 + Math.abs(parseFloat(s.mo1))*2;
+    const positive = parseFloat(s.mo1) >= 0;
+
+    // Glow
+    const grad = ctx.createRadialGradient(x,y,0,x,y,r);
+    grad.addColorStop(0, positive ? 'rgba(0,200,83,0.4)' : 'rgba(239,68,68,0.4)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(x,y,r*1.5,0,Math.PI*2);
+    ctx.fillStyle = grad; ctx.fill();
+
+    // Bubble
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = positive ? 'rgba(0,200,83,0.2)' : 'rgba(239,68,68,0.2)';
+    ctx.strokeStyle = positive ? '#00c853' : '#ef4444';
+    ctx.lineWidth = 1.5;
+    ctx.fill(); ctx.stroke();
+
+    // Label
+    ctx.fillStyle = '#f1f5f9';
+    ctx.font = 'bold 11px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.etf, x, y+1);
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = positive ? '#00c853' : '#ef4444';
+    ctx.fillText((positive?'+':'')+s.mo1+'%', x, y+14);
+    ctx.textAlign = 'left';
+  });
+}
+
+// ── SECTOR DATA ──
+const SECTORS_ROT = [
+  {etf:'XLK', name:'Tecnología',   mo1:null, mo3:null, momentum:0},
+  {etf:'XLF', name:'Financiero',   mo1:null, mo3:null, momentum:0},
+  {etf:'XLE', name:'Energía',      mo1:null, mo3:null, momentum:0},
+  {etf:'XLV', name:'Salud',        mo1:null, mo3:null, momentum:0},
+  {etf:'XLI', name:'Industrial',   mo1:null, mo3:null, momentum:0},
+  {etf:'XLB', name:'Materiales',   mo1:null, mo3:null, momentum:0},
+  {etf:'XLU', name:'Utilities',    mo1:null, mo3:null, momentum:0},
+  {etf:'XLY', name:'Consumo D.',   mo1:null, mo3:null, momentum:0},
+  {etf:'XLRE','name':'Real Estate', mo1:null, mo3:null, momentum:0},
+];
+
+// ── ① ACCUMULATION / DISTRIBUTION ──
+async function runAccumAnalysis() {
+  const ticker = document.getElementById('cf-ticker').value.trim().toUpperCase();
+  if(!ticker) return;
+  const period = document.getElementById('cf-period').value;
+  const btn = document.getElementById('cf-btn');
+  btn.textContent='⏳ Cargando...'; btn.disabled=true;
+
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=${period}`;
+    const data = await fetchYahoo(url);
+    const result = data?.chart?.result?.[0];
+    if(!result) throw new Error('Sin datos para '+ticker);
+
+    const q = result.indicators.quote[0];
+    const ts = result.timestamp;
+    const ohlcv = ts.map((t,i)=>({
+      t: new Date(t*1000).toLocaleDateString('es-AR',{day:'2-digit',month:'short'}),
+      o: q.open[i], h: q.high[i], l: q.low[i], c: q.close[i], v: q.volume[i]
+    })).filter(d=>d.c&&d.v);
+
+    cfData = ohlcv;
+
+    // Calculate indicators
+    const cmf = calcCMF(ohlcv);
+    const obv = calcOBV(ohlcv);
+    const blocks = detectBlockTrades(ohlcv);
+    const darkPool = calcDarkPoolProxy(ohlcv);
+
+    // Draw charts
+    document.getElementById('cf-chart-area').style.display = 'block';
+    setTimeout(() => {
+      const pc = document.getElementById('cf-price-canvas');
+      const oc = document.getElementById('cf-obv-canvas');
+      if(pc) drawPriceChart(pc, ohlcv, cmf);
+      if(oc) drawOBVChart(oc, ohlcv, obv);
+    }, 100);
+
+    // Signal box
+    const lastCMF = cmf[cmf.length-1]?.val || 0;
+    const obvTrend = obv[obv.length-1].val > obv[Math.floor(obv.length*0.7)].val;
+    const signal = lastCMF > 0.05 && obvTrend ? 'ACUMULACIÓN' : lastCMF < -0.05 && !obvTrend ? 'DISTRIBUCIÓN' : 'NEUTRAL';
+    const sigColor = signal==='ACUMULACIÓN'?'var(--green)':signal==='DISTRIBUCIÓN'?'var(--red)':'var(--amber)';
+    const sigIcon = signal==='ACUMULACIÓN'?'↑':signal==='DISTRIBUCIÓN'?'↓':'→';
+
+    document.getElementById('cf-signal-box').style.display='block';
+    document.getElementById('cf-signal-content').innerHTML = `
+      <div style="text-align:center;padding:16px 0">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:${sigColor};line-height:1">${sigIcon}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:${sigColor};letter-spacing:.1em">${signal}</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:6px">${ticker} — Smart Money Signal</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--dim)">CMF (20)</div>
+          <div style="font-size:18px;font-family:'Bebas Neue';color:${lastCMF>=0?'var(--green)':'var(--red)'}">${lastCMF.toFixed(3)}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--dim)">OBV Trend</div>
+          <div style="font-size:18px;font-family:'Bebas Neue';color:${obvTrend?'var(--green)':'var(--red)'}">${obvTrend?'ALCISTA':'BAJISTA'}</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--dim);line-height:1.6">
+        ${signal==='ACUMULACIÓN'?'Institucionales comprando en silencio. CMF positivo + OBV al alza confirma entrada de dinero.':
+          signal==='DISTRIBUCIÓN'?'Manos grandes están vendiendo. Presión vendedora institucional activa. Cautela.':
+          'Señal mixta. Sin evidencia clara de posicionamiento institucional direccional.'}
+      </div>`;
+
+    // Block trades
+    document.getElementById('cf-blocks-box').style.display='block';
+    document.getElementById('cf-blocks-content').innerHTML = blocks.length===0
+      ? '<div style="color:var(--dim);font-size:13px">Sin block trades significativos detectados.</div>'
+      : blocks.reverse().map(b=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <span style="color:${b.bullish?'var(--green)':'var(--red)'};font-weight:700;font-size:12px">${b.bullish?'▲ COMPRA':'▼ VENTA'}</span>
+            <span style="color:var(--dim);font-size:11px;margin-left:8px">${b.date}</span>
+          </div>
+          <div style="text-align:right">
+            <span style="color:var(--white);font-size:12px">$${b.price.toFixed(2)}</span>
+            <span style="color:var(--amber);font-size:11px;margin-left:8px">${b.avgMult}x vol</span>
+          </div>
+        </div>`).join('');
+
+    // Dark pool
+    document.getElementById('cf-darkpool-box').style.display='block';
+    const dpRatio = darkPool.accumDays/(darkPool.accumDays+darkPool.distribDays||1);
+    document.getElementById('cf-darkpool-content').innerHTML = `
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--dim);margin-bottom:6px">Operaciones silenciosas últimos 30 días (alto vol, bajo movimiento de precio)</div>
+        <div style="display:flex;gap:12px">
+          <div style="background:rgba(0,200,83,0.1);border:1px solid rgba(0,200,83,0.3);border-radius:4px;padding:8px 12px;flex:1;text-align:center">
+            <div style="color:var(--green);font-family:'Bebas Neue';font-size:22px">${darkPool.accumDays}</div>
+            <div style="font-size:10px;color:var(--dim)">días acum.</div>
+          </div>
+          <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:8px 12px;flex:1;text-align:center">
+            <div style="color:var(--red);font-family:'Bebas Neue';font-size:22px">${darkPool.distribDays}</div>
+            <div style="font-size:10px;color:var(--dim)">días distrib.</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+          <div style="height:100%;width:${(dpRatio*100).toFixed(0)}%;background:${dpRatio>0.5?'var(--green)':'var(--red)'};border-radius:4px"></div>
+        </div>
+        <div style="font-size:11px;color:${dpRatio>0.6?'var(--green)':dpRatio<0.4?'var(--red)':'var(--amber)'};margin-top:6px">
+          ${dpRatio>0.6?'Acumulación institucional dominante en operaciones silenciosas':
+            dpRatio<0.4?'Distribución silenciosa predomina — señal de alerta':
+            'Balance neutro entre acumulación y distribución'}
+        </div>
+      </div>
+      ${darkPool.signals.map(s=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="color:${s.type==='ACUM'?'var(--green)':'var(--red)'}">${s.type==='ACUM'?'▲':'▼'} ${s.type}</span>
+        <span style="color:var(--amber)">${s.volRatio}x vol</span>
+        <span style="color:var(--dim)">$${s.price?.toFixed(2)||'—'}</span>
+      </div>`).join('')}`;
+
+    // AI
+    runAccumAI(ticker, signal, lastCMF, obvTrend, blocks, darkPool);
+
+  } catch(e) {
+    document.getElementById('cf-signal-box').style.display='block';
+    document.getElementById('cf-signal-content').innerHTML=`<div style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
+  }
+  btn.textContent='⚡ ANALIZAR'; btn.disabled=false;
+}
+
+async function runAccumAI(ticker, signal, cmf, obvTrend, blocks, darkPool) {
+  const box = document.getElementById('cf-ai-box');
+  const text = document.getElementById('cf-ai-text');
+  box.style.display='block';
+  text.innerHTML='<span class="spin">◌</span> Analizando posicionamiento...';
+  const bullBlocks = blocks.filter(b=>b.bullish).length;
+  const bearBlocks = blocks.filter(b=>!b.bullish).length;
+  const prompt = `Sos un analista de market microstructure. Analizá el posicionamiento institucional de ${ticker}:
+
+SEÑAL GENERAL: ${signal}
+CMF (Chaikin Money Flow 20): ${cmf.toFixed(3)} (${cmf>0?'flujo positivo — compradores dominan':'flujo negativo — vendedores dominan'})
+OBV Tendencia: ${obvTrend?'ALCISTA (acumulando)':'BAJISTA (distribuyendo)'}
+Block Trades recientes: ${bullBlocks} alcistas, ${bearBlocks} bajistas
+Dark Pool proxy: ${darkPool.accumDays} días de acumulación silenciosa vs ${darkPool.distribDays} de distribución
+
+Escribí un análisis de 4-5 oraciones en español que:
+1. Interprete qué está haciendo el smart money con ${ticker}
+2. Explique si la señal es de capitulación, absorción o distribución
+3. Dé una perspectiva accionable concreta
+Sé directo y útil para un trader/inversor.`;
+  try {
+    const res = await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const d = await res.json();
+    text.innerHTML = (d.content?.[0]?.text||'Sin respuesta').replace(/\n/g,'<br>');
+  } catch(e) {
+    text.innerHTML=`<span style="color:var(--amber)">IA no disponible. Interpretá las métricas arriba directamente.</span>`;
+  }
+}
+
+// ── ② SECTOR ROTATION ──
+async function loadSectorRotation() {
+  const btn = document.getElementById('rot-btn');
+  if(btn) { btn.textContent='⏳ Cargando...'; btn.disabled=true; }
+  document.getElementById('rot-loading').style.display='flex';
+
+  const etfs = SECTORS_ROT.map(s=>s.etf);
+  await Promise.allSettled(etfs.map(async (etf,idx) => {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${etf}?interval=1d&range=3mo`;
+      const data = await fetchYahoo(url);
+      const r = data?.chart?.result?.[0];
+      if(!r) return;
+      const closes = r.indicators.quote[0].close.filter(v=>v!=null);
+      if(closes.length < 30) return;
+      const mo1 = ((closes[closes.length-1]-closes[closes.length-22])/closes[closes.length-22]*100).toFixed(2);
+      const mo3 = ((closes[closes.length-1]-closes[0])/closes[0]*100).toFixed(2);
+      const momentum = parseFloat(mo1) - parseFloat(mo3)/3;
+      SECTORS_ROT[idx].mo1 = mo1;
+      SECTORS_ROT[idx].mo3 = mo3;
+      SECTORS_ROT[idx].momentum = momentum;
+      rotData[etf] = closes;
+    } catch(e) {}
+  }));
+
+  const loaded = SECTORS_ROT.filter(s=>s.mo1!==null);
+  document.getElementById('rot-loading').style.display='none';
+
+  if(loaded.length > 0) {
+    const canvas = document.getElementById('rot-canvas');
+    drawBubbleChart(canvas, loaded);
+    renderRotTable(loaded);
+  }
+
+  if(btn) { btn.textContent='⚡ ACTUALIZAR'; btn.disabled=false; }
+}
+
+function renderRotTable(sectors) {
+  const sorted = [...sectors].sort((a,b)=>parseFloat(b.mo1)-parseFloat(a.mo1));
+  const maxFlow = Math.max(...sorted.map(s=>Math.abs(parseFloat(s.mo1))));
+  document.getElementById('rot-table').innerHTML = `
+    <div style="display:grid;grid-template-columns:80px 1fr 80px 80px 100px;gap:0;margin-bottom:8px">
+      <span style="font-size:10px;color:var(--dim);letter-spacing:.1em">ETF</span>
+      <span style="font-size:10px;color:var(--dim);letter-spacing:.1em">SECTOR</span>
+      <span style="font-size:10px;color:var(--dim);letter-spacing:.1em;text-align:right">1 MES</span>
+      <span style="font-size:10px;color:var(--dim);letter-spacing:.1em;text-align:right">3 MESES</span>
+      <span style="font-size:10px;color:var(--dim);letter-spacing:.1em">FLUJO</span>
+    </div>
+    ${sorted.map((s,i)=>{
+      const mo1f = parseFloat(s.mo1);
+      const barW = (Math.abs(mo1f)/maxFlow*100).toFixed(0);
+      const label = i===0?'🥇 LIDER':i===1?'🥈':i===sorted.length-1?'⚠ SALIDA':'';
+      return `<div style="display:grid;grid-template-columns:80px 1fr 80px 80px 100px;gap:0;padding:9px 0;border-top:1px solid var(--border);align-items:center">
+        <span style="font-family:'Bebas Neue';font-size:16px;color:var(--white)">${s.etf}</span>
+        <span style="font-size:13px;color:var(--text)">${s.name} <span style="font-size:11px;color:var(--amber)">${label}</span></span>
+        <span style="text-align:right;font-weight:700;color:${mo1f>=0?'var(--green)':'var(--red)'}">${mo1f>=0?'+':''}${s.mo1}%</span>
+        <span style="text-align:right;font-size:12px;color:${parseFloat(s.mo3)>=0?'var(--green)':'var(--red)'}">${parseFloat(s.mo3)>=0?'+':''}${s.mo3}%</span>
+        <div style="padding-left:8px">
+          <div style="background:var(--border);border-radius:2px;height:6px;overflow:hidden">
+            <div style="height:100%;width:${barW}%;background:${mo1f>=0?'var(--green)':'var(--red)'};border-radius:2px"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+// ── ③ MARKET BREADTH ──
+const SP500_SAMPLE = ['AAPL','MSFT','NVDA','GOOGL','META','AMZN','TSLA','JPM','XOM','LLY',
+  'UNH','V','MA','AVGO','HD','CVX','MRK','ABBV','PEP','KO','WMT','BAC','COST','TMO','CSCO',
+  'ACN','MCD','DHR','ABT','TXN','ADBE','WFC','CRM','NFLX','AMD','PM','RTX','LIN','NEE','QCOM'];
+
+async function loadBreadth() {
+  const el = document.getElementById('breadth-sp500');
+  el.innerHTML='<div style="color:var(--dim);font-size:13px"><span class="spin">◌</span> Cargando datos de amplitud...</div>';
+  await calcBreadth(SP500_SAMPLE, 'breadth-sp500', 'S&P 500 (muestra 40 acciones)');
+  renderBreadthAlerts();
+}
+
+async function loadCustomBreadth() {
+  const raw = document.getElementById('breadth-custom-tickers').value;
+  const tickers = raw.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
+  if(tickers.length < 3) {
+    document.getElementById('breadth-custom-result').innerHTML='<div style="color:var(--amber);font-size:12px">Ingresá al menos 3 tickers.</div>';
+    return;
+  }
+  document.getElementById('breadth-custom-result').innerHTML='<div style="color:var(--dim);font-size:13px"><span class="spin">◌</span> Analizando...</div>';
+  await calcBreadth(tickers, 'breadth-custom-result', 'Cartera personalizada');
+}
+
+async function calcBreadth(tickers, targetId, label) {
+  let above50=0, above200=0, total=0;
+  const results = [];
+
+  await Promise.allSettled(tickers.slice(0,40).map(async sym => {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`;
+      const data = await fetchYahoo(url);
+      const r = data?.chart?.result?.[0];
+      if(!r) return;
+      const closes = r.indicators.quote[0].close.filter(v=>v!=null);
+      if(closes.length < 50) return;
+      const last = closes[closes.length-1];
+      const sma50 = closes.slice(-50).reduce((a,b)=>a+b,0)/50;
+      const sma200 = closes.length>=200 ? closes.slice(-200).reduce((a,b)=>a+b,0)/200 : null;
+      const a50 = last > sma50;
+      const a200 = sma200 ? last > sma200 : null;
+      if(a50) above50++;
+      if(a200!==null) { if(a200) above200++; }
+      total++;
+      results.push({sym, last, sma50, sma200, a50, a200});
+    } catch(e) {}
+  }));
+
+  if(total === 0) {
+    document.getElementById(targetId).innerHTML='<div style="color:var(--red)">Sin datos disponibles.</div>';
+    return;
+  }
+
+  const pct50 = (above50/total*100).toFixed(0);
+  const pct200 = total>0 ? (above200/(results.filter(r=>r.a200!==null).length||1)*100).toFixed(0) : '—';
+  const health = pct50>70?'FUERTE':pct50>50?'MODERADO':pct50>30?'DÉBIL':'CRÍTICO';
+  const healthColor = pct50>70?'var(--green)':pct50>50?'var(--amber)':pct50>30?'var(--red)':'var(--red)';
+
+  // Store for alerts
+  window._breadthData = window._breadthData||{};
+  window._breadthData[label] = {pct50:parseFloat(pct50), pct200:parseFloat(pct200), total, health};
+
+  document.getElementById(targetId).innerHTML = `
+    <div style="text-align:center;padding:10px 0 16px">
+      <div style="font-size:11px;color:var(--dim);margin-bottom:4px">${label}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;color:${healthColor};line-height:1">${pct50}%</div>
+      <div style="font-size:12px;color:${healthColor};letter-spacing:.1em">${health}</div>
+      <div style="font-size:11px;color:var(--dim);margin-top:4px">sobre SMA 50</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--dim)">Sobre SMA 50</div>
+        <div style="font-size:20px;font-family:'Bebas Neue';color:${pct50>50?'var(--green)':'var(--red)'}">${above50}/${total}</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--dim)">Sobre SMA 200</div>
+        <div style="font-size:20px;font-family:'Bebas Neue';color:${pct200>50?'var(--green)':'var(--red)'}">${above200}/${results.filter(r=>r.a200!==null).length}</div>
+      </div>
+    </div>
+    <div style="background:var(--border);border-radius:4px;height:8px;margin-bottom:6px;overflow:hidden">
+      <div style="height:100%;width:${pct50}%;background:${healthColor};border-radius:4px"></div>
+    </div>
+    <div style="font-size:11px;color:var(--dim)">
+      ${pct50>70?'Mercado saludable. Amplia participación alcista.':
+        pct50>50?'Mayoría de acciones alcistas. Tendencia intacta pero vigilar.':
+        pct50>30?'Deterioro de amplitud. Mercado frágil — pocas acciones sostienen el índice.':
+        '⚠ Amplitud crítica. Señal de agotamiento o corrección profunda.'}
+    </div>
+    <div style="margin-top:10px">
+      ${results.slice(0,8).map(r=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--white)">${r.sym}</span>
+        <span style="color:${r.a50?'var(--green)':'var(--red)'}">${r.a50?'▲':'▼'} SMA50</span>
+        ${r.a200!==null?`<span style="color:${r.a200?'var(--green)':'var(--red)'}">${r.a200?'▲':'▼'} SMA200</span>`:'<span style="color:var(--dim)">—</span>'}
+      </div>`).join('')}
+    </div>`;
+}
+
+function renderBreadthAlerts() {
+  const data = window._breadthData || {};
+  const alerts = [];
+  Object.entries(data).forEach(([label, d]) => {
+    if(d.pct50 < 50) alerts.push({level:'danger', msg:`⚠ <strong>${label}</strong>: Solo ${d.pct50}% de acciones sobre SMA50. Alerta de agotamiento.`});
+    if(d.pct50 > 50 && d.pct200 < 40) alerts.push({level:'warn', msg:`⚡ <strong>${label}</strong>: Rebote débil — SMA50 ${d.pct50}% pero SMA200 solo ${d.pct200}%. Recuperación frágil.`});
+    if(d.pct50 > 80) alerts.push({level:'ok', msg:`✓ <strong>${label}</strong>: Amplitud fuerte (${d.pct50}%). Tendencia alcista con amplia participación.`});
+  });
+  const el = document.getElementById('breadth-alerts');
+  if(alerts.length === 0) {
+    el.innerHTML='<div style="color:var(--dim);font-size:13px">Cargá datos de amplitud para ver alertas automáticas.</div>';
+  } else {
+    el.innerHTML = alerts.map(a=>`<div style="background:${a.level==='danger'?'rgba(239,68,68,0.08)':a.level==='warn'?'rgba(245,158,11,0.08)':'rgba(0,200,83,0.08)'};border-left:3px solid ${a.level==='danger'?'var(--red)':a.level==='warn'?'var(--amber)':'var(--green)'};border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--text)">${a.msg}</div>`).join('');
+  }
+}
+
+// ── ④ NEWS SENTIMENT ──
+const SENTIMENT_KEYWORDS = {
+  positive: ['surge','rally','beat','record','growth','strong','bullish','upgrade','buy','profit','gain','rise','soar','exceed','outperform','positive','up','high','boost','breakthrough'],
+  negative: ['fall','crash','drop','miss','loss','bearish','downgrade','sell','decline','plunge','weak','risk','concern','worry','below','cut','lower','warning','crisis','recession']
+};
+
+function scoreSentiment(text) {
+  const lower = text.toLowerCase();
+  let score = 0;
+  SENTIMENT_KEYWORDS.positive.forEach(w => { if(lower.includes(w)) score++; });
+  SENTIMENT_KEYWORDS.negative.forEach(w => { if(lower.includes(w)) score--; });
+  return score;
+}
+
+async function runSentiment() {
+  const ticker = document.getElementById('sent-ticker').value.trim().toUpperCase();
+  if(!ticker) return;
+  const btn = document.getElementById('sent-btn');
+  btn.textContent='⏳ Analizando...'; btn.disabled=true;
+
+  try {
+    // Fetch news RSS
+    const rssUrl = `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${ticker}&region=US&lang=en-US`;
+    const xmlText = await fetchRSS(rssUrl);
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlText, 'text/xml');
+    const items = Array.from(xml.querySelectorAll('item')).slice(0,15);
+
+    if(items.length === 0) throw new Error('Sin noticias disponibles para '+ticker);
+
+    // Fetch recent price + volume for context
+    let priceData = null;
+    try {
+      const pd = await fetchYahoo(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1mo`);
+      const pr = pd?.chart?.result?.[0];
+      if(pr) {
+        const closes = pr.indicators.quote[0].close.filter(v=>v!=null);
+        const vols = pr.indicators.quote[0].volume.filter(v=>v!=null);
+        const avgVol = vols.slice(0,-1).reduce((a,b)=>a+b,0)/(vols.length-1);
+        const lastVol = vols[vols.length-1];
+        const priceChg = ((closes[closes.length-1]-closes[closes.length-2])/closes[closes.length-2]*100).toFixed(2);
+        priceData = { lastVol, avgVol, volRatio:(lastVol/avgVol).toFixed(2), priceChg, lastPrice: closes[closes.length-1] };
+      }
+    } catch(e) {}
+
+    // Score each news item
+    const scored = items.map(item => {
+      const title = item.querySelector('title')?.textContent||'';
+      const desc = item.querySelector('description')?.textContent||'';
+      const link = item.querySelector('link')?.textContent||'#';
+      const pubDate = item.querySelector('pubDate')?.textContent||'';
+      const score = scoreSentiment(title + ' ' + desc);
+      const date = pubDate ? new Date(pubDate).toLocaleDateString('es-AR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+      return {title, link, score, date};
+    });
+
+    const totalScore = scored.reduce((a,b)=>a+b.score,0);
+    const avgScore = totalScore/scored.length;
+    const posCount = scored.filter(s=>s.score>0).length;
+    const negCount = scored.filter(s=>s.score<0).length;
+    const neutCount = scored.filter(s=>s.score===0).length;
+
+    // Divergence analysis
+    const divergences = [];
+    if(priceData) {
+      if(avgScore < -0.5 && parseFloat(priceData.priceChg) > 0) {
+        divergences.push({type:'alcista', msg:`Sentimiento negativo (${avgScore.toFixed(1)}) pero precio sube ${priceData.priceChg}% — el mercado ignora el ruido negativo. Señal alcista.`});
+      }
+      if(avgScore > 0.5 && parseFloat(priceData.priceChg) < 0) {
+        divergences.push({type:'bajista', msg:`Sentimiento positivo (${avgScore.toFixed(1)}) pero precio cae ${priceData.priceChg}% — posible distribución bajo noticias buenas. Señal bajista.`});
+      }
+      if(Math.abs(avgScore) > 1 && parseFloat(priceData.volRatio) < 0.8) {
+        divergences.push({type:'neutral', msg:`Noticias ${avgScore>0?'positivas':'negativas'} intensas pero volumen bajo (${priceData.volRatio}x avg) — mercado ignora el evento. Bajo impacto real.`});
+      }
+    }
+
+    // Render score box
+    document.getElementById('sent-score-box').style.display='block';
+    const sentLabel = avgScore>0.5?'POSITIVO':avgScore<-0.5?'NEGATIVO':'NEUTRO';
+    const sentColor = avgScore>0.5?'var(--green)':avgScore<-0.5?'var(--red)':'var(--amber)';
+    document.getElementById('sent-score-content').innerHTML=`
+      <div style="text-align:center;margin-bottom:14px">
+        <div style="font-family:'Bebas Neue';font-size:42px;color:${sentColor};line-height:1">${avgScore>0?'+':''}${avgScore.toFixed(2)}</div>
+        <div style="font-size:13px;color:${sentColor};letter-spacing:.1em">${sentLabel}</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:4px">${ticker} — ${scored.length} noticias analizadas</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
+        <div style="background:rgba(0,200,83,0.1);border-radius:4px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-family:'Bebas Neue';color:var(--green)">${posCount}</div>
+          <div style="font-size:10px;color:var(--dim)">positivas</div>
+        </div>
+        <div style="background:rgba(245,158,11,0.1);border-radius:4px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-family:'Bebas Neue';color:var(--amber)">${neutCount}</div>
+          <div style="font-size:10px;color:var(--dim)">neutras</div>
+        </div>
+        <div style="background:rgba(239,68,68,0.1);border-radius:4px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-family:'Bebas Neue';color:var(--red)">${negCount}</div>
+          <div style="font-size:10px;color:var(--dim)">negativas</div>
+        </div>
+      </div>
+      ${priceData?`<div style="background:var(--bg3);border-radius:6px;padding:10px;font-size:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="color:var(--dim)">Precio</span>
+          <span style="color:${parseFloat(priceData.priceChg)>=0?'var(--green)':'var(--red)'};font-weight:700">${parseFloat(priceData.priceChg)>=0?'+':''}${priceData.priceChg}%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--dim)">Volumen vs avg</span>
+          <span style="color:${priceData.volRatio>1.5?'var(--amber)':'var(--dim)'}">${priceData.volRatio}x</span>
+        </div>
+      </div>`:''}`;
+
+    // Divergences
+    if(divergences.length > 0) {
+      document.getElementById('sent-divergence-box').style.display='block';
+      document.getElementById('sent-divergence-content').innerHTML = divergences.map(d=>`
+        <div style="background:${d.type==='alcista'?'rgba(0,200,83,0.08)':d.type==='bajista'?'rgba(239,68,68,0.08)':'rgba(245,158,11,0.08)'};border-radius:6px;padding:10px;margin-bottom:8px;font-size:12px;color:var(--text);line-height:1.5">
+          ${d.msg}
+        </div>`).join('');
+    } else {
+      document.getElementById('sent-divergence-box').style.display='block';
+      document.getElementById('sent-divergence-content').innerHTML=`<div style="color:var(--dim);font-size:12px">Sin divergencias significativas detectadas entre sentimiento y precio.</div>`;
+    }
+
+    // News list
+    document.getElementById('sent-news-area').style.display='block';
+    document.getElementById('sent-news-list').innerHTML=scored.map(s=>`
+      <div class="news-card" onclick="window.open('${s.link}','_blank')" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div class="news-headline" style="flex:1">${s.title}</div>
+          <div style="flex-shrink:0;background:${s.score>0?'rgba(0,200,83,0.15)':s.score<0?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.1)'};border:1px solid ${s.score>0?'rgba(0,200,83,0.4)':s.score<0?'rgba(239,68,68,0.4)':'rgba(245,158,11,0.3)'};border-radius:4px;padding:3px 8px;font-size:12px;font-weight:700;color:${s.score>0?'var(--green)':s.score<0?'var(--red)':'var(--amber)'}">
+            ${s.score>0?'+':''}${s.score}
+          </div>
+        </div>
+        <div class="news-meta"><span class="news-src">Yahoo Finance</span><span>${s.date}</span></div>
+      </div>`).join('');
+
+    // AI sentiment
+    runSentimentAI(ticker, avgScore, divergences, scored.slice(0,5).map(s=>s.title), priceData);
+
+  } catch(e) {
+    document.getElementById('sent-score-box').style.display='block';
+    document.getElementById('sent-score-content').innerHTML=`<div style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
+  }
+  btn.textContent='⚡ ANALIZAR'; btn.disabled=false;
+}
+
+async function runSentimentAI(ticker, avgScore, divergences, headlines, priceData) {
+  const box = document.getElementById('sent-ai-box');
+  const text = document.getElementById('sent-ai-text');
+  box.style.display='block';
+  text.innerHTML='<span class="spin">◌</span> Interpretando sentimiento...';
+  const prompt = `Sos un analista de sentimiento de mercado. Analizá el flujo de noticias de ${ticker}:
+
+SCORE DE SENTIMIENTO PROMEDIO: ${avgScore.toFixed(2)} (${avgScore>0.5?'positivo':avgScore<-0.5?'negativo':'neutro'})
+${priceData?`PRECIO RECIENTE: ${priceData.priceChg}% | Volumen: ${priceData.volRatio}x promedio`:''}
+DIVERGENCIAS DETECTADAS: ${divergences.length>0?divergences.map(d=>d.msg).join(' | '):'Ninguna'}
+TITULARES RECIENTES:
+${headlines.map((h,i)=>`${i+1}. ${h}`).join('\n')}
+
+Escribí un análisis de 4-5 oraciones en español que:
+1. Interprete qué está comunicando el mercado a través del sentimiento de noticias
+2. Explique si las divergencias son señales accionables o ruido
+3. Dé perspectiva sobre el impacto real de las noticias en el precio
+Sé concreto y útil para un inversor.`;
+  try {
+    const res = await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    const d = await res.json();
+    text.innerHTML=(d.content?.[0]?.text||'Sin respuesta').replace(/\n/g,'<br>');
+  } catch(e) {
+    text.innerHTML=`<span style="color:var(--amber)">IA no disponible. Interpretá el score y divergencias directamente.</span>`;
+  }
+}
+
+// Init capital flow page
+function initCapitalFlow() {
+  setCFTab('accum');
+}
+
+
 showPage('home');
 </script>
+
+<!-- ════════════════════════════════════
+     CAPITAL FLOW INTELLIGENCE — MODULE 05
+════════════════════════════════════ -->
+<div class="page" id="page-capital">
+<div class="module-page">
+  <div class="module-header">
+    <div>
+      <div class="module-breadcrumb" onclick="showPage('home')">← EQUITYKS</div>
+      <div class="module-title">Capital Flow Intelligence</div>
+    </div>
+    <div style="font-size:11px;color:var(--dim);letter-spacing:.1em">// SMART MONEY TRACKER v1.0</div>
+  </div>
+
+  <!-- TAB NAVIGATION -->
+  <div style="display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:14px">
+    <div class="sec-tab active" id="cft-tab-accum" onclick="setCFTab('accum')">① Acumulación</div>
+    <div class="sec-tab" id="cft-tab-rotation" onclick="setCFTab('rotation')">② Rotación Sectorial</div>
+    <div class="sec-tab" id="cft-tab-breadth" onclick="setCFTab('breadth')">③ Market Breadth</div>
+    <div class="sec-tab" id="cft-tab-sentiment" onclick="setCFTab('sentiment')">④ News Sentiment</div>
+  </div>
+
+  <!-- ① ACUMULACIÓN / DISTRIBUCIÓN -->
+  <div id="cft-panel-accum">
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:16px">
+      <div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:16px">
+          <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:16px">
+            <div class="field" style="flex:1">
+              <label>Ticker</label>
+              <input type="text" id="cf-ticker" placeholder="AAPL, VIST, MELI..." style="text-transform:uppercase">
+            </div>
+            <div class="field">
+              <label>Período</label>
+              <select id="cf-period" style="background:var(--bg3);border:1px solid var(--border2);color:var(--white);padding:10px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:13px">
+                <option value="3mo">3 Meses</option>
+                <option value="6mo" selected>6 Meses</option>
+                <option value="1y">1 Año</option>
+              </select>
+            </div>
+            <button class="btn-primary" onclick="runAccumAnalysis()" id="cf-btn">⚡ ANALIZAR</button>
+          </div>
+          <!-- Quick tickers -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:10px;color:var(--dim);letter-spacing:.1em;align-self:center">RÁPIDO:</span>
+            <div class="ibtn" onclick="cfQuick('SPY')">SPY</div>
+            <div class="ibtn" onclick="cfQuick('QQQ')">QQQ</div>
+            <div class="ibtn" onclick="cfQuick('VIST')">VIST</div>
+            <div class="ibtn" onclick="cfQuick('MELI')">MELI</div>
+            <div class="ibtn" onclick="cfQuick('NVDA')">NVDA</div>
+            <div class="ibtn" onclick="cfQuick('GLD')">GLD</div>
+            <div class="ibtn" onclick="cfQuick('GGAL')">GGAL</div>
+            <div class="ibtn" onclick="cfQuick('BMA')">BMA</div>
+          </div>
+        </div>
+
+        <!-- CHART AREA -->
+        <div id="cf-chart-area" style="display:none">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:16px">
+            <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:16px">// Precio + Chaikin Money Flow (CMF)</div>
+            <canvas id="cf-price-canvas" height="200" style="width:100%"></canvas>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px">
+            <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:16px">// On Balance Volume (OBV) — Acumulación Institucional</div>
+            <canvas id="cf-obv-canvas" height="120" style="width:100%"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <!-- Signal Box -->
+        <div id="cf-signal-box" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px 20px;display:none">
+          <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:14px">// Señal Institucional</div>
+          <div id="cf-signal-content"></div>
+        </div>
+
+        <!-- Block Trade Detector -->
+        <div id="cf-blocks-box" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px 20px;display:none">
+          <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:14px">// Block Trades Detectados</div>
+          <div id="cf-blocks-content"></div>
+        </div>
+
+        <!-- Dark Pool Proxy -->
+        <div id="cf-darkpool-box" style="background:var(--bg2);border:1px solid var(--violet);border-radius:8px;padding:18px 20px;display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="color:var(--violet)">◆</span>
+            <span style="font-size:10px;letter-spacing:.2em;color:var(--violet);text-transform:uppercase">Dark Pool Proxy</span>
+          </div>
+          <div id="cf-darkpool-content"></div>
+        </div>
+
+        <!-- AI Analysis -->
+        <div id="cf-ai-box" style="background:var(--bg2);border:1px solid var(--green);border-radius:8px;padding:18px 20px;display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="color:var(--green)">◆</span>
+            <span style="font-size:10px;letter-spacing:.2em;color:var(--green);text-transform:uppercase">Análisis IA</span>
+          </div>
+          <div id="cf-ai-text" style="font-size:13px;color:var(--text);line-height:1.7"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② ROTACIÓN SECTORIAL -->
+  <div id="cft-panel-rotation" style="display:none">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase">// Mapa de Rotación Sectorial — S&P 500</div>
+        <button class="btn-primary" onclick="loadSectorRotation()" id="rot-btn">⚡ ACTUALIZAR</button>
+      </div>
+      <!-- Bubble chart -->
+      <div style="position:relative;height:420px;background:var(--bg3);border-radius:6px;overflow:hidden" id="rot-canvas-wrapper">
+        <canvas id="rot-canvas" style="width:100%;height:100%"></canvas>
+        <div id="rot-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:13px"><span class="spin">◌</span> &nbsp;Cargando datos sectoriales...</div>
+      </div>
+      <div style="display:flex;gap:20px;margin-top:12px;font-size:11px;color:var(--dim)">
+        <span>● Tamaño = Volumen relativo</span>
+        <span style="color:var(--green)">● Verde = Inflow</span>
+        <span style="color:var(--red)">● Rojo = Outflow</span>
+        <span>Eje X = Performance 1M · Eje Y = Momentum (1M vs 3M)</span>
+      </div>
+    </div>
+
+    <!-- Sector table -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px">
+      <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:14px">// Ranking de Flujo Sectorial</div>
+      <div id="rot-table"></div>
+    </div>
+  </div>
+
+  <!-- ③ MARKET BREADTH -->
+  <div id="cft-panel-breadth" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <!-- S&P 500 Breadth -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase">// S&P 500 — Amplitud</div>
+          <button class="btn-primary" style="padding:6px 14px;font-size:11px" onclick="loadBreadth()">CARGAR</button>
+        </div>
+        <div id="breadth-sp500"></div>
+      </div>
+      <!-- Custom Index -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px">
+        <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:14px">// Análisis Custom</div>
+        <textarea id="breadth-custom-tickers" placeholder="Pegá tickers separados por coma:&#10;AAPL, MSFT, NVDA, META, GOOGL..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--white);padding:10px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;min-height:80px;box-sizing:border-box"></textarea>
+        <button class="btn-primary" style="width:100%;margin-top:10px" onclick="loadCustomBreadth()">⚡ ANALIZAR</button>
+        <div id="breadth-custom-result" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Breadth Alert -->
+    <div id="breadth-alert-box" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px">
+      <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:14px">// Alertas de Agotamiento de Tendencia</div>
+      <div id="breadth-alerts"></div>
+    </div>
+  </div>
+
+  <!-- ④ NEWS SENTIMENT -->
+  <div id="cft-panel-sentiment" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:16px">
+      <div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:16px">
+          <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:16px">
+            <div class="field" style="flex:1">
+              <label>Ticker para análisis de sentimiento</label>
+              <input type="text" id="sent-ticker" placeholder="AAPL, VIST, MELI..." style="text-transform:uppercase">
+            </div>
+            <button class="btn-primary" onclick="runSentiment()" id="sent-btn">⚡ ANALIZAR</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span style="font-size:10px;color:var(--dim);letter-spacing:.1em;align-self:center">RÁPIDO:</span>
+            <div class="ibtn" onclick="sentQuick('NVDA')">NVDA</div>
+            <div class="ibtn" onclick="sentQuick('VIST')">VIST</div>
+            <div class="ibtn" onclick="sentQuick('MELI')">MELI</div>
+            <div class="ibtn" onclick="sentQuick('GGAL')">GGAL</div>
+            <div class="ibtn" onclick="sentQuick('SPY')">SPY</div>
+            <div class="ibtn" onclick="sentQuick('GLD')">GLD</div>
+          </div>
+        </div>
+
+        <!-- News feed with scores -->
+        <div id="sent-news-area" style="display:none">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px">
+            <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:14px">// Noticias con Score de Sentimiento + Impacto de Volumen</div>
+            <div id="sent-news-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sentiment Dashboard -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div id="sent-score-box" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px 20px;display:none">
+          <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:14px">// Score Global</div>
+          <div id="sent-score-content"></div>
+        </div>
+
+        <div id="sent-divergence-box" style="background:var(--bg2);border:1px solid var(--amber);border-radius:8px;padding:18px 20px;display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="color:var(--amber)">⚡</span>
+            <span style="font-size:10px;letter-spacing:.2em;color:var(--amber);text-transform:uppercase">Divergencias</span>
+          </div>
+          <div id="sent-divergence-content"></div>
+        </div>
+
+        <div id="sent-ai-box" style="background:var(--bg2);border:1px solid var(--green);border-radius:8px;padding:18px 20px;display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="color:var(--green)">◆</span>
+            <span style="font-size:10px;letter-spacing:.2em;color:var(--green);text-transform:uppercase">Análisis IA</span>
+          </div>
+          <div id="sent-ai-text" style="font-size:13px;color:var(--text);line-height:1.7"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
 </body>
 </html>
