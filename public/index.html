@@ -1295,13 +1295,37 @@ function bHandleFile(e) {
     reader.onload = ev => {
       try {
         const wb = XLSX.read(new Uint8Array(ev.target.result), { type:'array' });
-        let all = '';
-        wb.SheetNames.forEach(sh => {
-          const csv = XLSX.utils.sheet_to_csv(wb.Sheets[sh]);
-          if (csv.trim().length > 5) all += `\n\n=== HOJA: ${sh} ===\n${csv}`;
+        const allSheets = wb.SheetNames;
+        // Priority: sheets with financial keywords get extracted first
+        const PRIORITY_KEYWORDS = ['eerr','esf','result','income','balance','p&l','estado','indicador','rentab','kpi','resumen','summary','main','principal','consolidado','consolidated','ratio','liqui','capital'];
+        const SKIP_KEYWORDS = ['macro','market share','market cap','accion','stock','price','precio','share','grafico','chart','gráf'];
+        // Score each sheet
+        const scored = allSheets.map(sh => {
+          const low = sh.toLowerCase();
+          const skip = SKIP_KEYWORDS.some(k => low.includes(k));
+          const priority = PRIORITY_KEYWORDS.some(k => low.includes(k));
+          return { sh, skip, priority };
         });
-        bFileData = all;
-        fnEl.textContent = '✓ ' + file.name + ' (' + wb.SheetNames.length + ' hojas)';
+        // Select: priority first, then others, skip last resort
+        const priority = scored.filter(s => s.priority && !s.skip).map(s => s.sh);
+        const normal   = scored.filter(s => !s.priority && !s.skip).map(s => s.sh);
+        const ordered  = [...priority, ...normal].slice(0, 12); // max 12 sheets
+        let all = `ARCHIVO: ${file.name}\nTOTAL HOJAS: ${allSheets.length} | HOJAS ANALIZADAS: ${ordered.length}\nHOJAS SELECCIONADAS: ${ordered.join(', ')}\n`;
+        const MAX_CHARS = 28000;
+        for (const sh of ordered) {
+          if (all.length > MAX_CHARS) break;
+          const ws = wb.Sheets[sh];
+          // Convert to array of arrays, filter empty rows, limit rows
+          const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+          const nonEmpty = rows.filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+          const limited = nonEmpty.slice(0, 60); // max 60 rows per sheet
+          const csv = limited.map(r => r.slice(0,14).join('\t')).join('\n'); // max 14 cols
+          if (csv.trim().length > 10) {
+            all += `\n\n=== HOJA: ${sh} ===\n${csv}`;
+          }
+        }
+        bFileData = all.slice(0, MAX_CHARS);
+        fnEl.textContent = `✓ ${file.name} (${ordered.length}/${allSheets.length} hojas — ${Math.round(bFileData.length/1024)}KB procesados)`;
       } catch(err) { fnEl.textContent = '⚠ Error: ' + err.message; bFileData = null; }
     };
     reader.onerror = () => { fnEl.textContent = '⚠ Error leyendo Excel'; bFileData = null; };
@@ -1430,7 +1454,7 @@ async function bAnalyzeAR() {
       });
     } else {
       // Excel/CSV: append text data to prompt
-      const fullPrompt = prompt + `\n\n=== DATOS DEL ARCHIVO: ${bFileName} ===\n${bFileData.slice(0, 15000)}`;
+      const fullPrompt = prompt + `\n\n=== DATOS DEL ARCHIVO: ${bFileName} ===\n${bFileData.slice(0, 28000)}`;
       body = JSON.stringify({ prompt: fullPrompt, max_tokens: 4000 });
     }
     const res = await fetch('/api/claude', {
