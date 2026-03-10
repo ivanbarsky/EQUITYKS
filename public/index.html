@@ -800,58 +800,65 @@ nav {
     <div style="font-size:10px;color:var(--dim);letter-spacing:.15em">01 · AI POWERED</div>
   </div>
 
-  <!-- INPUT -->
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:22px 26px;margin-bottom:16px">
-    <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:14px">// Ingresá el ticker — datos traídos automáticamente de Yahoo Finance</div>
-    <div style="display:grid;grid-template-columns:1fr 160px 160px auto;gap:12px;align-items:end">
+  <!-- API KEY SETUP (one time) -->
+  <div id="bal-setup-box" style="background:var(--bg2);border:1px solid var(--amber);border-radius:8px;padding:20px 24px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="color:var(--amber);font-size:16px">🔑</span>
+      <span style="font-size:11px;letter-spacing:.15em;color:var(--amber);text-transform:uppercase">Configuración única — API Key gratuita</span>
+    </div>
+    <div style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">
+      Para traer balances reales necesitás una API Key gratuita de <strong style="color:var(--white)">Financial Modeling Prep</strong>.<br>
+      ① Entrá a <a href="https://financialmodelingprep.com/register" target="_blank" style="color:var(--cyan)">financialmodelingprep.com/register</a> → registrate gratis (sin tarjeta)<br>
+      ② Copiá tu API key del dashboard → pegala acá abajo<br>
+      ③ Se guarda en tu browser — no la vas a tener que poner nunca más
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <input type="text" id="bal-apikey-input" placeholder="Pegá tu API key de FMP acá..." style="flex:1;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.05em">
+      <button class="btn-primary" onclick="balSaveKey()" style="white-space:nowrap">💾 GUARDAR KEY</button>
+    </div>
+    <div id="bal-key-status" style="margin-top:8px;font-size:12px;color:var(--dim)"></div>
+  </div>
+
+  <!-- MAIN INPUT -->
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 160px 160px auto;gap:12px;align-items:end;margin-bottom:16px">
       <div class="field">
         <label>Ticker</label>
-        <input type="text" id="bal-ticker" placeholder="AAPL · GGAL · MELI · VIST · MSFT" style="text-transform:uppercase;font-size:16px;padding:12px 14px">
+        <input type="text" id="bal-ticker" placeholder="AAPL · GGAL · MELI · MSFT..." style="text-transform:uppercase;font-size:15px;padding:11px 14px" onkeydown="if(event.key==='Enter')balAnalyze()">
       </div>
       <div class="field">
         <label>Período</label>
         <select id="bal-period" style="background:var(--bg3);border:1px solid var(--border2);color:var(--white);padding:11px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:13px;width:100%">
           <option value="annual" selected>Anual</option>
-          <option value="quarterly">Trimestral</option>
+          <option value="quarter">Trimestral</option>
         </select>
       </div>
       <div class="field">
-        <label>Profundidad</label>
-        <select id="bal-depth" style="background:var(--bg3);border:1px solid var(--border2);color:var(--white);padding:11px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:13px;width:100%">
-          <option value="standard" selected>Estándar</option>
-          <option value="deep">Profundo</option>
+        <label>Períodos</label>
+        <select id="bal-limit" style="background:var(--bg3);border:1px solid var(--border2);color:var(--white);padding:11px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:13px;width:100%">
+          <option value="4" selected>Últimos 4</option>
+          <option value="8">Últimos 8</option>
+          <option value="12">Últimos 12</option>
         </select>
       </div>
-      <button class="btn-primary" id="bal-btn" onclick="balAnalyze()" style="padding:12px 22px;font-size:13px">⚡ ANALIZAR</button>
+      <button class="btn-primary" id="bal-btn" onclick="balAnalyze()" style="padding:11px 22px">⚡ ANALIZAR</button>
     </div>
 
-    <!-- Quick tickers -->
-    <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <span style="font-size:10px;color:var(--dim);letter-spacing:.1em">ACCESO RÁPIDO:</span>
-      <div class="ibtn" onclick="balQuick('AAPL')">AAPL</div>
-      <div class="ibtn" onclick="balQuick('MSFT')">MSFT</div>
-      <div class="ibtn" onclick="balQuick('NVDA')">NVDA</div>
-      <div class="ibtn" onclick="balQuick('MELI')">MELI</div>
-      <div class="ibtn" onclick="balQuick('GGAL')">GGAL</div>
-      <div class="ibtn" onclick="balQuick('VIST')">VIST</div>
-      <div class="ibtn" onclick="balQuick('BMA')">BMA</div>
-      <div class="ibtn" onclick="balQuick('YPF')">YPF</div>
-      <div class="ibtn" onclick="balQuick('AMZN')">AMZN</div>
-      <div class="ibtn" onclick="balQuick('TSLA')">TSLA</div>
+    <!-- Tabs: Quick access / Search -->
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <div class="ibtn active" id="bcat-tab-popular" onclick="balShowCat('popular')">⭐ Populares</div>
+      <div class="ibtn" id="bcat-tab-latam"   onclick="balShowCat('latam')">🌎 LATAM / ARG</div>
+      <div class="ibtn" id="bcat-tab-tech"    onclick="balShowCat('tech')">💻 Tecnología</div>
+      <div class="ibtn" id="bcat-tab-finance" onclick="balShowCat('finance')">🏦 Finanzas</div>
+      <div class="ibtn" id="bcat-tab-energy"  onclick="balShowCat('energy')">⛽ Energía</div>
+      <div class="ibtn" id="bcat-tab-health"  onclick="balShowCat('health')">💊 Salud</div>
+      <div class="ibtn" id="bcat-tab-search"  onclick="balShowCat('search')">🔍 Buscar</div>
     </div>
-  </div>
-
-  <!-- Features toggle -->
-  <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:8px">// Incluir en el análisis</div>
-  <div class="feat-grid" style="margin-bottom:20px">
-    <div class="feat-card on"  id="bf-ratios"    onclick="bToggleFeat('ratios')"><span class="feat-icon">📊</span><div class="feat-title">Ratios + Semáforo</div><div class="feat-desc">17 ratios con BUENO/NEUTRO/ALERTA</div><div class="feat-tog"></div></div>
-    <div class="feat-card on"  id="bf-risks"     onclick="bToggleFeat('risks')"><span class="feat-icon">⚠️</span><div class="feat-title">Riesgos & Oportunidades</div><div class="feat-desc">Alertas automáticas</div><div class="feat-tog"></div></div>
-    <div class="feat-card on"  id="bf-compare"   onclick="bToggleFeat('compare')"><span class="feat-icon">📈</span><div class="feat-title">Evolución Histórica</div><div class="feat-desc">Tendencias por período</div><div class="feat-tog"></div></div>
-    <div class="feat-card"     id="bf-dcf"       onclick="bToggleFeat('dcf')"><span class="feat-icon">💰</span><div class="feat-title">Valuación DCF</div><div class="feat-desc">Valor intrínseco estimado</div><div class="feat-tog"></div></div>
-    <div class="feat-card"     id="bf-altman"    onclick="bToggleFeat('altman')"><span class="feat-icon">🔬</span><div class="feat-title">Altman Z-Score</div><div class="feat-desc">Probabilidad de quiebra</div><div class="feat-tog"></div></div>
-    <div class="feat-card"     id="bf-sector"    onclick="bToggleFeat('sector')"><span class="feat-icon">🏭</span><div class="feat-title">Benchmark Sectorial</div><div class="feat-desc">Vs promedios del sector</div><div class="feat-tog"></div></div>
-    <div class="feat-card"     id="bf-sentiment" onclick="bToggleFeat('sentiment')"><span class="feat-icon">📰</span><div class="feat-title">Contexto Macro</div><div class="feat-desc">Noticias y macro relevante</div><div class="feat-tog"></div></div>
-    <div class="feat-card"     id="bf-export"    onclick="bExport()"><span class="feat-icon">📤</span><div class="feat-title">Exportar JSON</div><div class="feat-desc">Descargá el análisis</div><div class="feat-tog" style="display:none"></div></div>
+    <div id="bcat-search-wrap" style="display:none;margin-bottom:10px">
+      <input type="text" id="bcat-search-input" placeholder="Buscá empresa o ticker..." oninput="balSearchCompany(this.value)" style="width:100%;box-sizing:border-box">
+      <div id="bcat-search-results" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div id="bal-company-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
   </div>
 
   <!-- Loading -->
@@ -869,7 +876,7 @@ nav {
         <div class="results-title" id="b-res-title">—</div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn-secondary" onclick="bExport()">📤 Exportar</button>
+        <button class="btn-secondary" onclick="balExport()">📤 Exportar JSON</button>
         <button class="btn-secondary" onclick="bClearResults()">✕ Cerrar</button>
       </div>
     </div>
@@ -885,20 +892,20 @@ nav {
     </div>
 
     <!-- Ratio semaphore table -->
-    <div id="b-ratio-table-wrap" style="display:none;margin-bottom:16px">
+    <div id="b-ratio-table-wrap" style="display:none;margin-bottom:20px">
       <div style="font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:12px">// Ratios Financieros — Semáforo de Salud</div>
       <div style="overflow-x:auto">
-        <table id="b-ratio-table" style="width:100%;border-collapse:collapse;font-size:13px">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="background:var(--bg3)">
               <th style="padding:10px 14px;text-align:left;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:2px solid var(--border2)">CATEGORÍA</th>
-              <th style="padding:10px 14px;text-align:left;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:2px solid var(--border2)">RATIO</th>
-              <th style="padding:10px 14px;text-align:left;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:2px solid var(--border2)">QUÉ MIDE</th>
-              <th style="padding:10px 14px;text-align:center;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:2px solid var(--border2)">VALOR</th>
-              <th style="padding:10px 14px;text-align:center;color:var(--green);font-size:10px;letter-spacing:.1em;border-bottom:2px solid var(--border2)">● BUENO</th>
-              <th style="padding:10px 14px;text-align:center;color:var(--amber);font-size:10px;letter-spacing:.1em;border-bottom:2px solid var(--border2)">● NEUTRO</th>
-              <th style="padding:10px 14px;text-align:center;color:var(--red);font-size:10px;letter-spacing:.1em;border-bottom:2px solid var(--border2)">● ALERTA</th>
-              <th style="padding:10px 14px;text-align:center;color:var(--dim);font-size:10px;letter-spacing:.1em;border-bottom:2px solid var(--border2)">ESTADO</th>
+              <th style="padding:10px 14px;text-align:left;color:var(--dim);font-size:10px;border-bottom:2px solid var(--border2)">RATIO</th>
+              <th style="padding:10px 14px;text-align:left;color:var(--dim);font-size:10px;border-bottom:2px solid var(--border2)">QUÉ MIDE</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--dim);font-size:10px;border-bottom:2px solid var(--border2)">VALOR</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--green);font-size:10px;border-bottom:2px solid var(--border2)">● BUENO</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--amber);font-size:10px;border-bottom:2px solid var(--border2)">● NEUTRO</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--red);font-size:10px;border-bottom:2px solid var(--border2)">● ALERTA</th>
+              <th style="padding:10px 14px;text-align:center;color:var(--dim);font-size:10px;border-bottom:2px solid var(--border2)">ESTADO</th>
             </tr>
           </thead>
           <tbody id="b-ratio-tbody"></tbody>
@@ -1189,394 +1196,434 @@ loadHeroTicker();
 // BALANCE ANALYZER
 
 
+
 // ══════════════════════════════════════════
 // BALANCE ANALYZER — MODULE 01
-// Yahoo Finance · Zero config · AI powered
+// FMP Free API · Full auto · AI analysis
 // ══════════════════════════════════════════
-let bFeatures = new Set(['ratios','risks','compare']);
-let bLastData  = null;
+let bLastData = null;
+const BAL_KEY_STORAGE = 'equityks_fmp_key';
 
-// ── Ratio reference table ──
+// ── Company catalog ──
+const BAL_COMPANIES = {
+  popular: [
+    {t:'AAPL',n:'Apple'},          {t:'MSFT',n:'Microsoft'},   {t:'NVDA',n:'NVIDIA'},
+    {t:'GOOGL',n:'Alphabet'},      {t:'AMZN',n:'Amazon'},      {t:'META',n:'Meta'},
+    {t:'TSLA',n:'Tesla'},          {t:'JPM',n:'JPMorgan'},      {t:'V',n:'Visa'},
+    {t:'WMT',n:'Walmart'},         {t:'JNJ',n:'J&J'},           {t:'XOM',n:'Exxon'},
+    {t:'KO',n:'Coca-Cola'},        {t:'PEP',n:'PepsiCo'},       {t:'NFLX',n:'Netflix'},
+    {t:'BRKB',n:'Berkshire'},      {t:'MA',n:'Mastercard'},     {t:'HD',n:'Home Depot'},
+  ],
+  latam: [
+    {t:'MELI',n:'MercadoLibre'},   {t:'GGAL',n:'Grp. Galicia'},{t:'VIST',n:'Vista Energy'},
+    {t:'BMA',n:'Banco Macro'},     {t:'YPF',n:'YPF SA'},        {t:'CEPU',n:'Central Puerto'},
+    {t:'SUPV',n:'Supervielle'},    {t:'LOMA',n:'Loma Negra'},   {t:'BBAR',n:'BBVA Arg'},
+    {t:'TGS',n:'Transportadora'},  {t:'PAM',n:'Pampa Energía'}, {t:'PBR',n:'Petrobras'},
+    {t:'ITUB',n:'Itaú Unibanco'},  {t:'VALE',n:'Vale SA'},      {t:'SQM',n:'SQM Chile'},
+    {t:'BSAC',n:'Banco Santander Arg'},{t:'CRESY',n:'Cresud'}, {t:'IRSA',n:'IRSA'},
+  ],
+  tech: [
+    {t:'AMD',n:'AMD'},             {t:'INTC',n:'Intel'},        {t:'AVGO',n:'Broadcom'},
+    {t:'QCOM',n:'Qualcomm'},       {t:'TXN',n:'Texas Instr.'},  {t:'ASML',n:'ASML'},
+    {t:'ORCL',n:'Oracle'},         {t:'CRM',n:'Salesforce'},    {t:'ADBE',n:'Adobe'},
+    {t:'NOW',n:'ServiceNow'},      {t:'SNOW',n:'Snowflake'},    {t:'PLTR',n:'Palantir'},
+    {t:'NET',n:'Cloudflare'},      {t:'DDOG',n:'Datadog'},      {t:'MDB',n:'MongoDB'},
+    {t:'UBER',n:'Uber'},           {t:'ABNB',n:'Airbnb'},       {t:'SHOP',n:'Shopify'},
+  ],
+  finance: [
+    {t:'BAC',n:'Bank of America'}, {t:'WFC',n:'Wells Fargo'},   {t:'GS',n:'Goldman Sachs'},
+    {t:'MS',n:'Morgan Stanley'},   {t:'C',n:'Citigroup'},       {t:'AXP',n:'Amex'},
+    {t:'BLK',n:'BlackRock'},       {t:'SCHW',n:'Schwab'},       {t:'USB',n:'US Bancorp'},
+    {t:'COF',n:'Capital One'},     {t:'PNC',n:'PNC Financial'},  {t:'TFC',n:'Truist'},
+    {t:'ICE',n:'ICE'},             {t:'CME',n:'CME Group'},      {t:'SPGI',n:"S&P Global"},
+  ],
+  energy: [
+    {t:'CVX',n:'Chevron'},         {t:'COP',n:'ConocoPhillips'},{t:'SLB',n:'SLB'},
+    {t:'EOG',n:'EOG Resources'},   {t:'PSX',n:'Phillips 66'},   {t:'MPC',n:'Marathon Pete'},
+    {t:'OXY',n:'Occidental'},      {t:'HAL',n:'Halliburton'},   {t:'DVN',n:'Devon Energy'},
+    {t:'FCX',n:'Freeport-McM'},    {t:'NEM',n:'Newmont'},       {t:'GOLD',n:'Barrick Gold'},
+    {t:'NEE',n:'NextEra Energy'},  {t:'DUK',n:'Duke Energy'},   {t:'SO',n:'Southern Co'},
+  ],
+  health: [
+    {t:'LLY',n:'Eli Lilly'},       {t:'UNH',n:'UnitedHealth'},  {t:'JNJ',n:'J&J'},
+    {t:'MRK',n:'Merck'},           {t:'ABBV',n:'AbbVie'},       {t:'PFE',n:'Pfizer'},
+    {t:'TMO',n:'Thermo Fisher'},   {t:'ABT',n:'Abbott'},        {t:'DHR',n:'Danaher'},
+    {t:'BMY',n:'Bristol Myers'},   {t:'AMGN',n:'Amgen'},        {t:'GILD',n:'Gilead'},
+    {t:'ISRG',n:'Intuitive Surg.'},{t:'BSX',n:'Boston Scient.'},{t:'SYK',n:'Stryker'},
+  ],
+};
+const BAL_ALL = Object.values(BAL_COMPANIES).flat();
+
+// ── Ratio definitions ──
 const RATIO_REF = [
-  {cat:'Valuación',    key:'pe',           name:'P/E',           desc:'Precio / Ganancia',   good:'< 15x',   neutral:'15–25x',  alert:'> 30x',  isGood:v=>v>0&&v<15,   isAlert:v=>v>30||v<0,  fmt:v=>v.toFixed(1)+'x'},
-  {cat:'Valuación',    key:'pb',           name:'P/B',           desc:'Precio / Libro',      good:'< 1.5x',  neutral:'1.5–3x',  alert:'> 4x',   isGood:v=>v>0&&v<1.5,  isAlert:v=>v>4,        fmt:v=>v.toFixed(2)+'x'},
-  {cat:'Valuación',    key:'evEbitda',     name:'EV/EBITDA',     desc:'EV / EBITDA',         good:'< 7x',    neutral:'7–12x',   alert:'> 15x',  isGood:v=>v>0&&v<7,    isAlert:v=>v>15||v<0,  fmt:v=>v.toFixed(1)+'x'},
-  {cat:'Valuación',    key:'pfcf',         name:'P/FCF',         desc:'Precio / FCF',        good:'< 15x',   neutral:'15–25x',  alert:'> 30x',  isGood:v=>v>0&&v<15,   isAlert:v=>v>30||v<0,  fmt:v=>v.toFixed(1)+'x'},
-  {cat:'Valuación',    key:'peg',          name:'PEG',           desc:'P/E / Crecimiento',   good:'< 1x',    neutral:'1–2x',    alert:'> 2x',   isGood:v=>v>0&&v<1,    isAlert:v=>v>2||v<0,   fmt:v=>v.toFixed(2)+'x'},
-  {cat:'Rentabilidad', key:'roe',          name:'ROE',           desc:'Return on Equity',    good:'> 20%',   neutral:'10–20%',  alert:'< 8%',   isGood:v=>v>20,        isAlert:v=>v<8,        fmt:v=>v.toFixed(1)+'%'},
-  {cat:'Rentabilidad', key:'roa',          name:'ROA',           desc:'Return on Assets',    good:'> 10%',   neutral:'5–10%',   alert:'< 3%',   isGood:v=>v>10,        isAlert:v=>v<3,        fmt:v=>v.toFixed(1)+'%'},
-  {cat:'Rentabilidad', key:'ebitdaMargin', name:'Mg. EBITDA',    desc:'EBITDA / Ventas',     good:'> 25%',   neutral:'15–25%',  alert:'< 10%',  isGood:v=>v>25,        isAlert:v=>v<10,       fmt:v=>v.toFixed(1)+'%'},
-  {cat:'Rentabilidad', key:'netMargin',    name:'Mg. Neto',      desc:'Gan. Neta / Ventas',  good:'> 15%',   neutral:'5–15%',   alert:'< 0%',   isGood:v=>v>15,        isAlert:v=>v<0,        fmt:v=>v.toFixed(1)+'%'},
-  {cat:'Deuda',        key:'deudaEbitda',  name:'Deuda/EBITDA',  desc:'Deuda Neta / EBITDA', good:'< 2x',    neutral:'2–4x',    alert:'> 4x',   isGood:v=>v<2&&v>-99,  isAlert:v=>v>4,        fmt:v=>v.toFixed(1)+'x'},
-  {cat:'Deuda',        key:'icr',          name:'ICR',           desc:'EBIT / Intereses',    good:'> 4x',    neutral:'1.5–4x',  alert:'< 1.5x', isGood:v=>v>4,         isAlert:v=>v<1.5,      fmt:v=>v.toFixed(1)+'x'},
-  {cat:'Deuda',        key:'de',           name:'D/E',           desc:'Deuda / Patrimonio',  good:'< 1x',    neutral:'1–2x',    alert:'> 3x',   isGood:v=>v>=0&&v<1,   isAlert:v=>v>3,        fmt:v=>v.toFixed(2)+'x'},
-  {cat:'Liquidez',     key:'currentRatio', name:'Current Ratio', desc:'Activo C / Pasivo C', good:'> 2x',    neutral:'1–2x',    alert:'< 1x',   isGood:v=>v>2,         isAlert:v=>v<1,        fmt:v=>v.toFixed(2)+'x'},
-  {cat:'Liquidez',     key:'quickRatio',   name:'Quick Ratio',   desc:'(Act-Inv)/Pas C',     good:'> 1.2x',  neutral:'0.8–1.2x',alert:'< 0.8x', isGood:v=>v>1.2,       isAlert:v=>v<0.8,      fmt:v=>v.toFixed(2)+'x'},
-  {cat:'Crecimiento',  key:'cagrEps',      name:'CAGR EPS',      desc:'Crecim. EPS anual',   good:'> 15%',   neutral:'5–15%',   alert:'< 0%',   isGood:v=>v>15,        isAlert:v=>v<0,        fmt:v=>v.toFixed(1)+'%'},
-  {cat:'Por acción',   key:'divYield',     name:'Div. Yield',    desc:'Dividendo / Precio',  good:'> 4%',    neutral:'1–4%',    alert:'0%',     isGood:v=>v>4,         isAlert:v=>v===0,      fmt:v=>v.toFixed(2)+'%'},
-  {cat:'Por acción',   key:'payout',       name:'Payout Ratio',  desc:'Divid. / EPS',        good:'< 60%',   neutral:'60–80%',  alert:'> 100%', isGood:v=>v>0&&v<60,   isAlert:v=>v>100,      fmt:v=>v.toFixed(0)+'%'},
+  {cat:'Valuación',    key:'pe',          name:'P/E',           desc:'Precio/Ganancia',    good:'< 15x',  neu:'15–25x',  alert:'> 30x',  ok:v=>v>0&&v<15,  bad:v=>v>30||v<0, fmt:v=>v.toFixed(1)+'x'},
+  {cat:'Valuación',    key:'pb',          name:'P/B',           desc:'Precio/Libro',       good:'< 1.5x', neu:'1.5–3x',  alert:'> 4x',   ok:v=>v>0&&v<1.5, bad:v=>v>4,        fmt:v=>v.toFixed(2)+'x'},
+  {cat:'Valuación',    key:'evEbitda',    name:'EV/EBITDA',     desc:'EV/EBITDA',          good:'< 7x',   neu:'7–12x',   alert:'> 15x',  ok:v=>v>0&&v<7,   bad:v=>v>15||v<0, fmt:v=>v.toFixed(1)+'x'},
+  {cat:'Valuación',    key:'pfcf',        name:'P/FCF',         desc:'Precio/FCF',         good:'< 15x',  neu:'15–25x',  alert:'> 30x',  ok:v=>v>0&&v<15,  bad:v=>v>30||v<0, fmt:v=>v.toFixed(1)+'x'},
+  {cat:'Valuación',    key:'peg',         name:'PEG',           desc:'P/E / Crecimiento',  good:'< 1x',   neu:'1–2x',    alert:'> 2x',   ok:v=>v>0&&v<1,   bad:v=>v>2||v<0,  fmt:v=>v.toFixed(2)+'x'},
+  {cat:'Rentabilidad', key:'roe',         name:'ROE',           desc:'Return on Equity',   good:'> 20%',  neu:'10–20%',  alert:'< 8%',   ok:v=>v>20,       bad:v=>v<8,       fmt:v=>v.toFixed(1)+'%'},
+  {cat:'Rentabilidad', key:'roa',         name:'ROA',           desc:'Return on Assets',   good:'> 10%',  neu:'5–10%',   alert:'< 3%',   ok:v=>v>10,       bad:v=>v<3,       fmt:v=>v.toFixed(1)+'%'},
+  {cat:'Rentabilidad', key:'ebitdaMgn',   name:'Mg. EBITDA',    desc:'EBITDA/Ventas',      good:'> 25%',  neu:'15–25%',  alert:'< 10%',  ok:v=>v>25,       bad:v=>v<10,      fmt:v=>v.toFixed(1)+'%'},
+  {cat:'Rentabilidad', key:'netMgn',      name:'Mg. Neto',      desc:'Gan.Neta/Ventas',    good:'> 15%',  neu:'5–15%',   alert:'< 0%',   ok:v=>v>15,       bad:v=>v<0,       fmt:v=>v.toFixed(1)+'%'},
+  {cat:'Rentabilidad', key:'grossMgn',    name:'Mg. Bruto',     desc:'Gan.Bruta/Ventas',   good:'> 40%',  neu:'20–40%',  alert:'< 20%',  ok:v=>v>40,       bad:v=>v<20,      fmt:v=>v.toFixed(1)+'%'},
+  {cat:'Deuda',        key:'deudaEbitda', name:'Deuda/EBITDA',  desc:'Deuda Neta/EBITDA',  good:'< 2x',   neu:'2–4x',    alert:'> 4x',   ok:v=>v<2,        bad:v=>v>4,       fmt:v=>v.toFixed(1)+'x'},
+  {cat:'Deuda',        key:'icr',         name:'ICR',           desc:'EBIT/Intereses',     good:'> 4x',   neu:'1.5–4x',  alert:'< 1.5x', ok:v=>v>4,        bad:v=>v<1.5,     fmt:v=>v.toFixed(1)+'x'},
+  {cat:'Deuda',        key:'de',          name:'D/E',           desc:'Deuda/Patrimonio',   good:'< 1x',   neu:'1–2x',    alert:'> 3x',   ok:v=>v>=0&&v<1,  bad:v=>v>3,       fmt:v=>v.toFixed(2)+'x'},
+  {cat:'Liquidez',     key:'currRatio',   name:'Current Ratio', desc:'Activo C/Pasivo C',  good:'> 2x',   neu:'1–2x',    alert:'< 1x',   ok:v=>v>2,        bad:v=>v<1,       fmt:v=>v.toFixed(2)+'x'},
+  {cat:'Liquidez',     key:'quickRatio',  name:'Quick Ratio',   desc:'(Act-Inv)/Pas C',    good:'> 1.2x', neu:'0.8–1.2x',alert:'< 0.8x', ok:v=>v>1.2,      bad:v=>v<0.8,     fmt:v=>v.toFixed(2)+'x'},
+  {cat:'Eficiencia',   key:'assetTurn',   name:'Asset Turnover',desc:'Ventas/Activo',      good:'> 1x',   neu:'0.5–1x',  alert:'< 0.3x', ok:v=>v>1,        bad:v=>v<0.3,     fmt:v=>v.toFixed(2)+'x'},
+  {cat:'Eficiencia',   key:'invTurn',     name:'Inv. Turnover', desc:'Ventas/Inventario',  good:'> 8x',   neu:'4–8x',    alert:'< 2x',   ok:v=>v>8,        bad:v=>v<2,       fmt:v=>v.toFixed(1)+'x'},
+  {cat:'Crecimiento',  key:'revGrowth',   name:'Rev. Growth',   desc:'Crec. ingresos',     good:'> 15%',  neu:'5–15%',   alert:'< 0%',   ok:v=>v>15,       bad:v=>v<0,       fmt:v=>v.toFixed(1)+'%'},
+  {cat:'Crecimiento',  key:'epsGrowth',   name:'EPS Growth',    desc:'Crec. ganancias/acc',good:'> 15%',  neu:'5–15%',   alert:'< 0%',   ok:v=>v>15,       bad:v=>v<0,       fmt:v=>v.toFixed(1)+'%'},
+  {cat:'Por acción',   key:'divYield',    name:'Div. Yield',    desc:'Dividendo/Precio',   good:'> 4%',   neu:'1–4%',    alert:'0%',     ok:v=>v>4,        bad:v=>v===0,     fmt:v=>v.toFixed(2)+'%'},
+  {cat:'Por acción',   key:'payout',      name:'Payout Ratio',  desc:'Dividendo/EPS',      good:'< 60%',  neu:'60–80%',  alert:'> 100%', ok:v=>v>0&&v<60,  bad:v=>v>100,     fmt:v=>v.toFixed(0)+'%'},
 ];
 
-function bToggleFeat(id) {
-  const card = document.getElementById('bf-'+id);
-  if (bFeatures.has(id)) { bFeatures.delete(id); card.classList.remove('on'); }
-  else { bFeatures.add(id); card.classList.add('on'); }
+// ── Formatters ──
+function fmt$(n){if(!n&&n!==0)return'N/D';const a=Math.abs(n);if(a>=1e12)return(n/1e12).toFixed(2)+'T';if(a>=1e9)return(n/1e9).toFixed(2)+'B';if(a>=1e6)return(n/1e6).toFixed(2)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return n.toFixed(0);}
+function fmtP(n){return n==null?'N/D':(n*100).toFixed(1)+'%';}
+function nn(v){return v!=null&&!isNaN(v)?v:null;}
+
+// ── Key management ──
+function balGetKey(){return localStorage.getItem(BAL_KEY_STORAGE)||'';}
+function balSaveKey(){
+  const k=document.getElementById('bal-apikey-input').value.trim();
+  if(!k){document.getElementById('bal-key-status').textContent='⚠ Ingresá una key válida.';return;}
+  localStorage.setItem(BAL_KEY_STORAGE,k);
+  document.getElementById('bal-key-status').innerHTML='<span style="color:var(--green)">✓ Key guardada. No la vas a tener que poner nunca más.</span>';
+  setTimeout(balInitKeyUI,1000);
+}
+function balInitKeyUI(){
+  const k=balGetKey();
+  const box=document.getElementById('bal-setup-box');
+  if(k){
+    box.style.borderColor='var(--green)';
+    box.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+      <div><span style="color:var(--green)">✓ API Key configurada</span> <span style="color:var(--dim);font-size:11px">${k.slice(0,6)}••••••••</span></div>
+      <div class="ibtn" onclick="balChangeKey()">Cambiar key</div>
+    </div>`;
+  }
+}
+function balChangeKey(){
+  localStorage.removeItem(BAL_KEY_STORAGE);
+  location.reload();
 }
 
-function balQuick(sym) {
-  document.getElementById('bal-ticker').value = sym;
+// ── Company chips ──
+function balShowCat(cat){
+  ['popular','latam','tech','finance','energy','health','search'].forEach(c=>{
+    const t=document.getElementById('bcat-tab-'+c);
+    if(t) t.classList.toggle('active',c===cat);
+  });
+  document.getElementById('bcat-search-wrap').style.display = cat==='search'?'block':'none';
+  const chips=document.getElementById('bal-company-chips');
+  if(cat==='search'){chips.innerHTML='';return;}
+  const list=BAL_COMPANIES[cat]||[];
+  chips.innerHTML=list.map(co=>`
+    <div onclick="balQuick('${co.t}')" style="cursor:pointer;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;display:flex;flex-direction:column;gap:2px;min-width:90px;transition:all .15s"
+      onmouseover="this.style.borderColor='var(--cyan)';this.style.background='rgba(6,182,212,0.08)'"
+      onmouseout="this.style.borderColor='var(--border2)';this.style.background='var(--bg3)'">
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--white);letter-spacing:.05em">${co.t}</span>
+      <span style="font-size:10px;color:var(--dim)">${co.n}</span>
+    </div>`).join('');
+}
+
+function balSearchCompany(q){
+  const res=document.getElementById('bcat-search-results');
+  if(!q||q.length<1){res.innerHTML='';return;}
+  const hits=BAL_ALL.filter(c=>c.t.includes(q.toUpperCase())||c.n.toLowerCase().includes(q.toLowerCase())).slice(0,20);
+  res.innerHTML=hits.map(co=>`
+    <div onclick="balQuick('${co.t}')" style="cursor:pointer;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;display:flex;gap:8px;align-items:center;transition:all .15s"
+      onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border2)'">
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--cyan)">${co.t}</span>
+      <span style="font-size:12px;color:var(--dim)">${co.n}</span>
+    </div>`).join('');
+}
+
+function balQuick(sym){
+  document.getElementById('bal-ticker').value=sym;
   balAnalyze();
 }
 
 // ── Loading helpers ──
-async function bRunLoading(steps) {
-  const wrap = document.getElementById('b-loading');
-  const fill = document.getElementById('b-loading-fill');
-  const stEl = document.getElementById('b-loading-steps');
-  wrap.classList.add('show'); fill.style.width = '0%';
-  stEl.innerHTML = steps.map((s,i) => `<div class="lstep" id="bls-${i}">· ${s}</div>`).join('');
-  for (let i = 0; i < steps.length; i++) {
-    const el = document.getElementById('bls-'+i);
-    el.classList.add('act');
-    el.innerHTML = `<span class="spin">◌</span> ${steps[i]}`;
-    fill.style.width = ((i+1)/steps.length*100)+'%';
-    await sleep(500 + Math.random()*300);
-    el.classList.remove('act'); el.classList.add('done');
-    el.innerHTML = `✓ ${steps[i]}`;
+async function bRunLoading(steps){
+  const wrap=document.getElementById('b-loading'),fill=document.getElementById('b-loading-fill'),stEl=document.getElementById('b-loading-steps');
+  wrap.classList.add('show');fill.style.width='0%';
+  stEl.innerHTML=steps.map((s,i)=>`<div class="lstep" id="bls-${i}">· ${s}</div>`).join('');
+  for(let i=0;i<steps.length;i++){
+    const el=document.getElementById('bls-'+i);
+    el.classList.add('act');el.innerHTML=`<span class="spin">◌</span> ${steps[i]}`;
+    fill.style.width=((i+1)/steps.length*100)+'%';
+    await new Promise(r=>setTimeout(r,500+Math.random()*250));
+    el.classList.remove('act');el.classList.add('done');el.innerHTML=`✓ ${steps[i]}`;
   }
 }
-function bHideLoading() { document.getElementById('b-loading').classList.remove('show'); }
-function bShowError(m)  { const el=document.getElementById('b-error'); el.textContent='⚠ '+m; el.classList.add('show'); bHideLoading(); }
-function bHideError()   { document.getElementById('b-error').classList.remove('show'); }
-function sleep(ms)      { return new Promise(r=>setTimeout(r,ms)); }
-
-// ── Fetch Yahoo Finance modules ──
-async function yf(ticker, modules) {
-  const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=${modules}`;
-  const data = await fetchYahoo(url);
-  const result = data?.quoteSummary?.result?.[0];
-  if (!result) throw new Error(`Sin datos para ${ticker}. Verificá que el ticker sea correcto.`);
-  return result;
+function bHideLoading(){document.getElementById('b-loading').classList.remove('show');}
+function bShowError(m){const el=document.getElementById('b-error');el.innerHTML='⚠ '+m;el.classList.add('show');bHideLoading();}
+function bHideError(){document.getElementById('b-error').classList.remove('show');}
+function bClearResults(){
+  document.getElementById('b-results').classList.remove('show');
+  document.getElementById('b-score-grid').style.display='none';
+  document.getElementById('b-ratio-table-wrap').style.display='none';
+  document.getElementById('b-an-blocks').innerHTML='';
+  bHideLoading();bHideError();
 }
 
-// ── Number formatters ──
-function fmt$(n) {
-  if (n == null) return 'N/D';
-  const abs = Math.abs(n);
-  if (abs >= 1e12) return (n/1e12).toFixed(2)+'T';
-  if (abs >= 1e9)  return (n/1e9).toFixed(2)+'B';
-  if (abs >= 1e6)  return (n/1e6).toFixed(2)+'M';
-  return n.toFixed(0);
+// ── FMP fetch via proxy ──
+async function fmpFetch(endpoint, apiKey){
+  const url=`https://financialmodelingprep.com/api/v3/${endpoint}&apikey=${apiKey}`;
+  const res=await fetch(`/api/proxy?url=${encodeURIComponent(url)}`);
+  if(!res.ok) throw new Error(`Error ${res.status} al conectar con FMP`);
+  const data=await res.json();
+  if(Array.isArray(data)&&data.length===0) return null;
+  if(data['Error Message']) throw new Error('FMP: '+data['Error Message']);
+  return data;
 }
-function fmtPct(n) { return n == null ? 'N/D' : (n*100).toFixed(1)+'%'; }
-function raw(obj, key) { return obj?.[key]?.raw ?? null; }
 
-// ── MAIN ANALYZER ──
-async function balAnalyze() {
-  const ticker  = document.getElementById('bal-ticker').value.trim().toUpperCase();
-  const period  = document.getElementById('bal-period').value;
-  const depth   = document.getElementById('bal-depth').value;
-  if (!ticker) return bShowError('Ingresá un ticker.');
-  bHideError(); bClearResults();
-  const btn = document.getElementById('bal-btn');
-  btn.disabled = true; btn.textContent = '⏳ Cargando...';
+// ── MAIN ANALYSIS ──
+async function balAnalyze(){
+  const ticker=document.getElementById('bal-ticker').value.trim().toUpperCase();
+  const period=document.getElementById('bal-period').value;
+  const limit=document.getElementById('bal-limit').value;
+  const apiKey=balGetKey();
+  if(!ticker) return bShowError('Ingresá un ticker.');
+  if(!apiKey) return bShowError('Guardá tu API key de FMP primero (arriba). Es gratis y tarda 30 segundos obtenerla.');
+  bHideError();bClearResults();
+  const btn=document.getElementById('bal-btn');btn.disabled=true;btn.textContent='⏳ Analizando...';
 
-  const steps = [
-    `Buscando ${ticker} en Yahoo Finance`,
-    'Descargando datos financieros',
-    'Descargando balance sheet',
-    'Calculando ratios',
-    'Analizando con IA'
-  ];
-  if (bFeatures.has('dcf'))    steps.push('Valuación DCF');
-  if (bFeatures.has('altman')) steps.push('Altman Z-Score');
-  await bRunLoading(steps);
+  await bRunLoading([
+    `Conectando con FMP — ${ticker}`,
+    'Descargando Income Statement',
+    'Descargando Balance Sheet',
+    'Descargando Cash Flow',
+    'Obteniendo ratios y métricas',
+    'Analizando con IA',
+  ]);
 
   try {
-    // Fetch all modules in parallel
-    const isQuarterly = period === 'quarterly';
-    const [summary, financials, price] = await Promise.all([
-      yf(ticker, 'defaultKeyStatistics,summaryDetail,financialData,assetProfile'),
-      yf(ticker, isQuarterly
-        ? 'incomeStatementHistoryQuarterly,balanceSheetHistoryQuarterly,cashflowStatementHistoryQuarterly'
-        : 'incomeStatementHistory,balanceSheetHistory,cashflowStatementHistory'),
-      fetchYahoo(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`)
+    const p = period==='annual' ? 'annual' : 'quarter';
+    const [inc, bal, cf, metrics, profile, price] = await Promise.all([
+      fmpFetch(`income-statement/${ticker}?period=${p}&limit=${limit}`, apiKey),
+      fmpFetch(`balance-sheet-statement/${ticker}?period=${p}&limit=${limit}`, apiKey),
+      fmpFetch(`cash-flow-statement/${ticker}?period=${p}&limit=${limit}`, apiKey),
+      fmpFetch(`key-metrics/${ticker}?period=${p}&limit=${limit}`, apiKey),
+      fmpFetch(`profile/${ticker}?`, apiKey),
+      fmpFetch(`quote-short/${ticker}?`, apiKey),
     ]);
 
-    // ── Extract key stats ──
-    const ks  = summary.defaultKeyStatistics || {};
-    const sd  = summary.summaryDetail        || {};
-    const fd  = summary.financialData        || {};
-    const ap  = summary.assetProfile         || {};
+    if(!inc||!inc[0]) throw new Error(`No se encontraron datos para "${ticker}". Verificá el ticker (usar símbolo NYSE/NASDAQ, ej: GGAL no GGAL.BA).`);
 
-    const incKey = isQuarterly ? 'incomeStatementHistoryQuarterly' : 'incomeStatementHistory';
-    const balKey = isQuarterly ? 'balanceSheetHistoryQuarterly'    : 'balanceSheetHistory';
-    const cfKey  = isQuarterly ? 'cashflowStatementHistoryQuarterly':'cashflowStatementHistory';
+    const i0=inc[0], b0=bal?.[0]||{}, c0=cf?.[0]||{}, m0=metrics?.[0]||{}, pr=profile?.[0]||{};
+    const currentPrice=price?.[0]?.price||pr.price||0;
 
-    const incomes  = (financials[incKey]?.[isQuarterly?'incomeStatementHistory':'incomeStatementHistory'] || financials[incKey]?.incomeStatements || []);
-    const balances = (financials[balKey]?.[isQuarterly?'balanceSheetHistory':'balanceSheetHistory'] || financials[balKey]?.balanceSheetStatements || []);
-    const cashflows= (financials[cfKey]?.[isQuarterly?'cashflowStatementHistory':'cashflowStatementHistory'] || financials[cfKey]?.cashflowStatements || []);
+    // ── Compute all ratios ──
+    const revenue   =i0.revenue||0;
+    const grossProf =i0.grossProfit||0;
+    const ebitda    =i0.ebitda||0;
+    const ebit      =i0.operatingIncome||0;
+    const netInc    =i0.netIncome||0;
+    const intExp    =Math.abs(i0.interestExpense||0);
+    const totalAss  =b0.totalAssets||0;
+    const totalDebt =(b0.totalDebt||b0.longTermDebt||0);
+    const totalEq   =b0.totalStockholdersEquity||b0.stockholdersEquity||0;
+    const cash      =b0.cashAndCashEquivalents||b0.cash||0;
+    const currAss   =b0.totalCurrentAssets||0;
+    const currLiab  =b0.totalCurrentLiabilities||0;
+    const inv       =b0.inventory||0;
+    const fcf       =c0.freeCashFlow||0;
+    const mktCap    =pr.mktCap||0;
+    const ev        =m0.enterpriseValue||0;
+    const shares    =i0.weightedAverageShsOut||0;
+    const eps       =shares>0?netInc/shares:0;
 
-    const inc = incomes[0]  || {};
-    const bal = balances[0] || {};
-    const cf  = cashflows[0]|| {};
+    // Revenue growth (vs previous period)
+    const prevRev   =inc[1]?.revenue||0;
+    const prevNetInc=inc[1]?.netIncome||0;
+    const prevEps   =inc[1]&&inc[1].weightedAverageShsOut>0?inc[1].netIncome/inc[1].weightedAverageShsOut:0;
 
-    const lastPrice = price?.chart?.result?.[0]?.indicators?.quote?.[0]?.close?.filter(v=>v!=null)?.slice(-1)[0] || 0;
+    const R={};
+    R.pe        = nn(m0.peRatio) || (eps>0?currentPrice/eps:null);
+    R.pb        = nn(m0.pbRatio) || (totalEq>0&&shares>0?currentPrice/(totalEq/shares):null);
+    R.evEbitda  = nn(m0.evToEbitda) || (ev>0&&ebitda>0?ev/ebitda:null);
+    R.pfcf      = nn(m0.priceToFreeCashFlowsRatio) || (mktCap>0&&fcf>0?mktCap/fcf:null);
+    R.peg       = nn(m0.priceEarningsToGrowthRatio);
+    R.roe       = totalEq>0 ? (netInc/totalEq)*100 : null;
+    R.roa       = totalAss>0 ? (netInc/totalAss)*100 : null;
+    R.ebitdaMgn = revenue>0 ? (ebitda/revenue)*100 : null;
+    R.netMgn    = revenue>0 ? (netInc/revenue)*100 : null;
+    R.grossMgn  = revenue>0 ? (grossProf/revenue)*100 : null;
+    const netDebt = totalDebt - cash;
+    R.deudaEbitda = ebitda>0 ? netDebt/ebitda : null;
+    R.icr       = intExp>0 ? ebit/intExp : null;
+    R.de        = totalEq>0 ? totalDebt/totalEq : null;
+    R.currRatio = currLiab>0 ? currAss/currLiab : null;
+    R.quickRatio= currLiab>0 ? (currAss-inv)/currLiab : null;
+    R.assetTurn = totalAss>0 ? revenue/totalAss : null;
+    R.invTurn   = inv>0 ? revenue/inv : null;
+    R.revGrowth = prevRev>0 ? ((revenue-prevRev)/prevRev)*100 : null;
+    R.epsGrowth = prevEps>0 ? ((eps-prevEps)/prevEps)*100 : null;
+    R.divYield  = nn(m0.dividendYield) ? m0.dividendYield*100 : (pr.lastDiv&&currentPrice>0?pr.lastDiv/currentPrice*100*4:0);
+    R.payout    = eps>0&&pr.lastDiv!=null ? (pr.lastDiv*4/eps)*100 : null;
 
-    // ── Build structured financial data ──
-    const revenue    = raw(inc,'totalRevenue');
-    const grossProfit= raw(inc,'grossProfit');
-    const ebitda     = raw(inc,'ebitda') || raw(fd,'ebitda');
-    const ebit       = raw(inc,'ebit');
-    const netIncome  = raw(inc,'netIncome');
-    const totalAssets= raw(bal,'totalAssets');
-    const totalDebt  = raw(bal,'shortLongTermDebt') || (( raw(bal,'longTermDebt')||0) + (raw(bal,'shortTermDebt')||0));
-    const totalEquity= raw(bal,'totalStockholderEquity');
-    const cashEquiv  = raw(bal,'cash') || raw(bal,'cashAndCashEquivalents');
-    const currentAssets= raw(bal,'totalCurrentAssets');
-    const currentLiab  = raw(bal,'totalCurrentLiabilities');
-    const inventory    = raw(bal,'inventory');
-    const interestExp  = raw(inc,'interestExpense');
-    const freeCashFlow = raw(cf,'freeCashFlow') || raw(fd,'freeCashFlow');
-    const sharesOut    = raw(ks,'sharesOutstanding') || raw(ks,'impliedSharesOutstanding');
-    const bookValue    = raw(ks,'bookValue');
-    const eps          = raw(ks,'trailingEps');
-    const epsForward   = raw(ks,'forwardEps');
-    const epsGrowth    = raw(ks,'earningsQuarterlyGrowth') ?? raw(fd,'earningsGrowth');
-    const dividendYield= raw(sd,'dividendYield') || raw(sd,'trailingAnnualDividendYield') || 0;
-    const payoutRatio  = raw(ks,'payoutRatio');
-    const beta         = raw(ks,'beta');
-    const mktCap       = raw(sd,'marketCap') || (lastPrice * (sharesOut||0));
-    const enterpriseVal= raw(ks,'enterpriseValue');
-
-    // ── Compute ratios ──
-    const R = {};
-    R.pe          = raw(sd,'trailingPE') || raw(sd,'forwardPE') || (eps&&eps>0 ? lastPrice/eps : null);
-    R.pb          = raw(ks,'priceToBook')  || (bookValue&&bookValue>0 ? lastPrice/bookValue : null);
-    R.evEbitda    = raw(ks,'enterpriseToEbitda') || (enterpriseVal&&ebitda&&ebitda>0 ? enterpriseVal/ebitda : null);
-    R.pfcf        = freeCashFlow&&freeCashFlow>0&&mktCap ? mktCap/freeCashFlow : null;
-    R.peg         = raw(ks,'pegRatio');
-    R.roe         = totalEquity&&totalEquity>0 ? (netIncome/totalEquity)*100 : (raw(fd,'returnOnEquity')||0)*100 || null;
-    R.roa         = totalAssets&&totalAssets>0 ? (netIncome/totalAssets)*100 : (raw(fd,'returnOnAssets')||0)*100 || null;
-    R.ebitdaMargin= ebitda&&revenue&&revenue>0 ? (ebitda/revenue)*100 : (raw(fd,'ebitdaMargins')||0)*100 || null;
-    R.netMargin   = (raw(fd,'profitMargins')||0)*100 || (netIncome&&revenue&&revenue>0 ? (netIncome/revenue)*100 : null);
-    const netDebt = totalDebt&&cashEquiv!=null ? totalDebt-cashEquiv : totalDebt;
-    R.deudaEbitda = netDebt&&ebitda&&ebitda>0 ? netDebt/ebitda : null;
-    R.icr         = ebit&&interestExp ? Math.abs(ebit/interestExp) : null;
-    R.de          = totalDebt&&totalEquity&&totalEquity>0 ? totalDebt/totalEquity : null;
-    R.currentRatio= currentAssets&&currentLiab&&currentLiab>0 ? currentAssets/currentLiab : raw(fd,'currentRatio');
-    R.quickRatio  = currentAssets&&inventory!=null&&currentLiab&&currentLiab>0 ? (currentAssets-inventory)/currentLiab : raw(fd,'quickRatio');
-    R.cagrEps     = epsGrowth!=null ? epsGrowth*100 : null;
-    R.divYield    = dividendYield*100;
-    R.payout      = payoutRatio!=null ? payoutRatio*100 : null;
-
-    // ── Build data summary for AI ──
-    const sector   = ap.sector   || 'No especificado';
-    const industry = ap.industry || 'No especificada';
-    const country  = ap.country  || '';
-    const periods  = incomes.slice(0,4).map(i=>i.endDate?.fmt||'').filter(Boolean).join(', ');
-
-    const dataStr = `
-TICKER: ${ticker} | PRECIO: $${lastPrice.toFixed(2)} | MKTCAP: ${fmt$(mktCap)}
-SECTOR: ${sector} | INDUSTRIA: ${industry} ${country?'| PAÍS: '+country:''}
-PERÍODO ANALIZADO: ${isQuarterly?'Trimestral':'Anual'} — ${periods}
-
-=== INCOME STATEMENT ===
-Ingresos (Revenue): ${fmt$(revenue)}
-Ganancia Bruta: ${fmt$(grossProfit)}
-EBITDA: ${fmt$(ebitda)}
-EBIT: ${fmt$(ebit)}
-Ganancia Neta: ${fmt$(netIncome)}
-Intereses: ${fmt$(interestExp)}
-
-=== BALANCE SHEET ===
-Activo Total: ${fmt$(totalAssets)}
-Activo Corriente: ${fmt$(currentAssets)}
-Pasivo Corriente: ${fmt$(currentLiab)}
-Deuda Total: ${fmt$(totalDebt)}
-Patrimonio Neto: ${fmt$(totalEquity)}
-Caja: ${fmt$(cashEquiv)}
-Inventario: ${fmt$(inventory)}
-
-=== CASH FLOW ===
-FCF (Free Cash Flow): ${fmt$(freeCashFlow)}
-
-=== MÉTRICAS POR ACCIÓN ===
-EPS Trailing: $${eps?.toFixed(2)||'N/D'}
-EPS Forward: $${epsForward?.toFixed(2)||'N/D'}
-Book Value/share: $${bookValue?.toFixed(2)||'N/D'}
-Beta: ${beta?.toFixed(2)||'N/D'}
-Div. Yield: ${fmtPct(dividendYield)}
-
-=== RATIOS CALCULADOS ===
-${Object.entries(R).filter(([k,v])=>v!=null).map(([k,v])=>`${k}: ${v.toFixed(3)}`).join('\n')}
-
-=== PERÍODOS ANTERIORES (ingresos) ===
-${incomes.slice(0,4).map(i=>`${i.endDate?.fmt||'—'}: Rev ${fmt$(raw(i,'totalRevenue'))} | Neto ${fmt$(raw(i,'netIncome'))}`).join('\n')}
-`.trim();
+    // ── Historical summary ──
+    const history = inc.slice(0,4).map(row=>{
+      const sh=row.weightedAverageShsOut||1;
+      return `${row.date?.slice(0,7)||'—'}: Rev ${fmt$(row.revenue)} | EBITDA ${fmt$(row.ebitda)} | Neto ${fmt$(row.netIncome)} | EPS $${(row.netIncome/sh).toFixed(2)}`;
+    }).join('\n');
 
     bHideLoading();
 
-    // ── Build AI prompt ──
-    const fi = [...bFeatures];
-    const prompt = `Sos analista financiero senior. Analizá ${ticker} (${sector}, ${industry}) en español.
+    // ── AI prompt ──
+    const prompt=`Sos un analista financiero senior. Analizá ${ticker} (${pr.companyName||ticker}) — Sector: ${pr.sector||'N/D'}, Industria: ${pr.industry||'N/D'}, País: ${pr.country||'N/D'}.
 
-${dataStr}
+=== DATOS FINANCIEROS (${period==='annual'?'Anual':'Trimestral'}) ===
+Precio actual: $${currentPrice.toFixed(2)} | Mkt Cap: ${fmt$(mktCap)} | EV: ${fmt$(ev)}
+Ingresos: ${fmt$(revenue)} | Gross Profit: ${fmt$(grossProf)} | EBITDA: ${fmt$(ebitda)} | EBIT: ${fmt$(ebit)}
+Ganancia Neta: ${fmt$(netInc)} | FCF: ${fmt$(fcf)} | Intereses: ${fmt$(intExp)}
+Total Activos: ${fmt$(totalAss)} | Deuda Total: ${fmt$(totalDebt)} | Caja: ${fmt$(cash)} | Deuda Neta: ${fmt$(netDebt)}
+Patrimonio Neto: ${fmt$(totalEq)} | Activo Cte: ${fmt$(currAss)} | Pasivo Cte: ${fmt$(currLiab)}
+EPS: $${eps.toFixed(2)} | Shares: ${fmt$(shares)} | Book Value/share: $${(totalEq/Math.max(shares,1)).toFixed(2)}
 
-Respondé SOLO con JSON válido (sin bloques de código, sin texto previo):
+=== RATIOS CALCULADOS ===
+${Object.entries(R).filter(([k,v])=>v!=null).map(([k,v])=>`${k}: ${v.toFixed(3)}`).join(' | ')}
+
+=== EVOLUCIÓN HISTÓRICA ===
+${history}
+
+=== PERFIL ===
+${pr.description?.slice(0,400)||''}
+
+Respondé SOLO con JSON válido, sin bloques de código ni texto previo:
 {
-  "company": "${ticker}",
+  "company": "${pr.companyName||ticker}",
   "ticker": "${ticker}",
-  "period": "${isQuarterly?'Trimestral':'Anual'} — ${periods}",
+  "period": "${period==='annual'?'Anual':'Trimestral'} — ${i0.date?.slice(0,7)||''}",
   "score": "A/B+/B/C+/C/D",
-  "scoreLabel": "descripción del score en 5 palabras",
-  "summary": "resumen ejecutivo 3-4 oraciones sobre la salud financiera y posición competitiva",
+  "scoreLabel": "descripción en 5 palabras",
+  "summary": "resumen ejecutivo en 4 oraciones sobre salud financiera, posición competitiva y momento actual",
   "kpis": [
-    {"name":"Ingresos","value":"${fmt$(revenue)}","delta":"","direction":"up/down/flat"},
-    {"name":"EBITDA","value":"${fmt$(ebitda)}","delta":"","direction":"up/down/flat"},
-    {"name":"Margen Neto","value":"${R.netMargin?.toFixed(1)||'N/D'}%","delta":"","direction":"up/down/flat"},
-    {"name":"Deuda Neta","value":"${fmt$(netDebt)}","delta":"","direction":"up/down/flat"},
-    {"name":"FCF","value":"${fmt$(freeCashFlow)}","delta":"","direction":"up/down/flat"},
-    {"name":"ROE","value":"${R.roe?.toFixed(1)||'N/D'}%","delta":"","direction":"up/down/flat"}
+    {"name":"Ingresos","value":"${fmt$(revenue)}","delta":"${R.revGrowth!=null?(R.revGrowth>0?'+':'')+R.revGrowth.toFixed(1)+'%':''}","direction":"${R.revGrowth>0?'up':R.revGrowth<0?'down':'flat'}"},
+    {"name":"EBITDA","value":"${fmt$(ebitda)}","delta":"${R.ebitdaMgn!=null?R.ebitdaMgn.toFixed(1)+'% mgn':''}","direction":"${(ebitda||0)>0?'up':'down'}"},
+    {"name":"Mg. Neto","value":"${R.netMgn!=null?R.netMgn.toFixed(1)+'%':'N/D'}","delta":"","direction":"${(R.netMgn||0)>15?'up':(R.netMgn||0)<0?'down':'flat'}"},
+    {"name":"Deuda Neta","value":"${fmt$(netDebt)}","delta":"","direction":"${netDebt<0?'up':netDebt>ebitda*4?'down':'flat'}"},
+    {"name":"FCF","value":"${fmt$(fcf)}","delta":"","direction":"${(fcf||0)>0?'up':'down'}"},
+    {"name":"ROE","value":"${R.roe!=null?R.roe.toFixed(1)+'%':'N/D'}","delta":"","direction":"${(R.roe||0)>15?'up':(R.roe||0)<0?'down':'flat'}"},
+    {"name":"Deuda/EBITDA","value":"${R.deudaEbitda!=null?R.deudaEbitda.toFixed(1)+'x':'N/D'}","delta":"","direction":"${(R.deudaEbitda||99)<2?'up':(R.deudaEbitda||99)>4?'down':'flat'}"},
+    {"name":"EPS","value":"$${eps.toFixed(2)}","delta":"${R.epsGrowth!=null?(R.epsGrowth>0?'+':'')+R.epsGrowth.toFixed(1)+'%':''}","direction":"${(R.epsGrowth||0)>0?'up':(R.epsGrowth||0)<0?'down':'flat'}"}
   ],
   "ratios": {
-    "pe": ${R.pe?.toFixed(2)||null},
-    "pb": ${R.pb?.toFixed(2)||null},
-    "evEbitda": ${R.evEbitda?.toFixed(2)||null},
-    "pfcf": ${R.pfcf?.toFixed(2)||null},
-    "peg": ${R.peg?.toFixed(2)||null},
-    "roe": ${R.roe?.toFixed(2)||null},
-    "roa": ${R.roa?.toFixed(2)||null},
-    "ebitdaMargin": ${R.ebitdaMargin?.toFixed(2)||null},
-    "netMargin": ${R.netMargin?.toFixed(2)||null},
-    "deudaEbitda": ${R.deudaEbitda?.toFixed(2)||null},
-    "icr": ${R.icr?.toFixed(2)||null},
-    "de": ${R.de?.toFixed(2)||null},
-    "currentRatio": ${R.currentRatio?.toFixed(2)||null},
-    "quickRatio": ${R.quickRatio?.toFixed(2)||null},
-    "cagrEps": ${R.cagrEps?.toFixed(2)||null},
-    "divYield": ${R.divYield?.toFixed(2)||null},
-    "payout": ${R.payout?.toFixed(2)||null}
+    "pe":${R.pe?.toFixed(2)||null},"pb":${R.pb?.toFixed(2)||null},"evEbitda":${R.evEbitda?.toFixed(2)||null},
+    "pfcf":${R.pfcf?.toFixed(2)||null},"peg":${R.peg?.toFixed(2)||null},
+    "roe":${R.roe?.toFixed(2)||null},"roa":${R.roa?.toFixed(2)||null},
+    "ebitdaMgn":${R.ebitdaMgn?.toFixed(2)||null},"netMgn":${R.netMgn?.toFixed(2)||null},"grossMgn":${R.grossMgn?.toFixed(2)||null},
+    "deudaEbitda":${R.deudaEbitda?.toFixed(2)||null},"icr":${R.icr?.toFixed(2)||null},"de":${R.de?.toFixed(2)||null},
+    "currRatio":${R.currRatio?.toFixed(2)||null},"quickRatio":${R.quickRatio?.toFixed(2)||null},
+    "assetTurn":${R.assetTurn?.toFixed(2)||null},"invTurn":${R.invTurn?.toFixed(2)||null},
+    "revGrowth":${R.revGrowth?.toFixed(2)||null},"epsGrowth":${R.epsGrowth?.toFixed(2)||null},
+    "divYield":${R.divYield?.toFixed(2)||null},"payout":${R.payout?.toFixed(2)||null}
   },
-  "strengths": ["fortaleza 1","fortaleza 2","fortaleza 3"],
-  "risks": ${fi.includes('risks')?'[{"type":"risk/opportunity/neutral","text":"descripción"}]':'null'},
-  "periodComparison": ${fi.includes('compare')?'"análisis de evolución histórica de ingresos, márgenes y deuda"':'null'},
-  "dcf": ${fi.includes('dcf')?'{"low":"$XX","mid":"$XX","high":"$XX","analysis":"texto DCF"}':'null'},
-  "altmanZ": ${fi.includes('altman')?'{"score":0.0,"zone":"safe/grey/distress","interpretation":"texto"}':'null'},
-  "sectorBenchmark": ${fi.includes('sector')?'"comparación vs promedios del sector '+sector+'"':'null'},
-  "sentiment": ${fi.includes('sentiment')?'"contexto macro y de mercado relevante para '+ticker+'"':'null'},
-  "recommendation": "conclusión accionable en 2-3 oraciones — ¿comprar, mantener o evitar y por qué?"
+  "strengths": ["fortaleza específica 1","fortaleza específica 2","fortaleza específica 3"],
+  "risks": [{"type":"risk","text":"riesgo concreto 1"},{"type":"risk","text":"riesgo concreto 2"},{"type":"opportunity","text":"oportunidad concreta 1"},{"type":"opportunity","text":"oportunidad concreta 2"}],
+  "periodComparison": "análisis detallado de evolución histórica — tendencia de ingresos, márgenes, deuda, EPS en los últimos períodos",
+  "dcf": {"low":"$XX","mid":"$XX","high":"$XX","analysis":"explicación del DCF y supuestos"},
+  "altmanZ": {"score":0.0,"zone":"safe/grey/distress","interpretation":"interpretación específica para ${ticker}"},
+  "sectorBenchmark": "comparación específica vs sector ${pr.sector||'comparable'} — qué métricas están por encima y cuáles por debajo del promedio",
+  "sentiment": "contexto macro y de mercado relevante para ${ticker} hoy — tasas, sector, catalizadores próximos",
+  "catalysts": "próximos catalizadores positivos o negativos a monitorear — earnings, regulaciones, expansión, competencia",
+  "recommendation": "conclusión accionable en 3 oraciones — perspectiva clara de comprar/mantener/evitar con precio objetivo estimado y tesis de inversión"
 }`;
 
-    const res = await fetch('/api/claude', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ prompt, max_tokens: 4000 })
-    });
-    if (!res.ok) { const e=await res.json().catch(()=>{}); return bShowError('Error IA: '+(e?.error||res.status)); }
-    const aiData = await res.json();
-    const text = aiData.content?.map(c=>c.text||'').join('') || '';
-    if (!text) return bShowError('Sin respuesta de IA. Intentá de nuevo.');
-    bRenderResults(text, ticker, R);
+    const aiRes=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,max_tokens:4500})});
+    if(!aiRes.ok){const e=await aiRes.json().catch(()=>({}));throw new Error('Error IA: '+(e?.error||aiRes.status));}
+    const aiData=await aiRes.json();
+    const text=aiData.content?.map(c=>c.text||'').join('')||'';
+    if(!text) throw new Error('Sin respuesta de IA. Intentá de nuevo.');
+    balRenderResults(text, ticker, R);
 
-  } catch(e) {
-    bShowError(e.message);
-  }
-  btn.disabled = false; btn.textContent = '⚡ ANALIZAR';
+  } catch(e) { bShowError(e.message); }
+  btn.disabled=false;btn.textContent='⚡ ANALIZAR';
 }
 
-// ── Render Results ──
-function bRenderResults(raw, ticker, R) {
+// ── Render ──
+function balRenderResults(rawText, ticker, R){
   let p;
-  try {
-    const clean = raw.replace(/```json|```/gi,'').trim();
-    p = JSON.parse(clean.substring(clean.indexOf('{'), clean.lastIndexOf('}')+1));
-  } catch(e) { return bShowError('Error al parsear respuesta. Intentá nuevamente.'); }
-  bLastData = p;
+  try{
+    const clean=rawText.replace(/```json|```/gi,'').trim();
+    p=JSON.parse(clean.substring(clean.indexOf('{'),clean.lastIndexOf('}')+1));
+  }catch(e){return bShowError('Error al parsear respuesta. Intentá nuevamente.');}
+  bLastData=p;
 
-  document.getElementById('b-res-title').innerHTML =
-    `<span style="color:var(--cyan)">${p.ticker}</span> — ${p.company} <span style="font-size:13px;color:var(--dim)">${p.period}</span>`;
+  document.getElementById('b-res-title').innerHTML=
+    `<span style="color:var(--cyan)">${p.ticker}</span> — ${p.company} <span style="font-size:12px;color:var(--dim);font-weight:400">${p.period}</span>`;
 
-  // Score
-  const sv = document.getElementById('b-score-val');
-  sv.textContent = p.score || 'B';
-  sv.className   = 'score-val score-' + (p.score?.[0] || 'B');
-  document.getElementById('b-score-sub').textContent = p.scoreLabel || '';
-
-  // KPIs
-  document.getElementById('b-kpi-grid').innerHTML = (p.kpis||[]).map(k => {
-    const dc = k.direction==='up'?'d-up':k.direction==='down'?'d-dn':'d-neu';
-    const di = k.direction==='up'?'▲':k.direction==='down'?'▼':'→';
+  const sv=document.getElementById('b-score-val');
+  sv.textContent=p.score||'B';
+  sv.className='score-val score-'+(p.score?.[0]||'B');
+  document.getElementById('b-score-sub').textContent=p.scoreLabel||'';
+  document.getElementById('b-kpi-grid').innerHTML=(p.kpis||[]).map(k=>{
+    const dc=k.direction==='up'?'d-up':k.direction==='down'?'d-dn':'d-neu';
+    const di=k.direction==='up'?'▲':k.direction==='down'?'▼':'→';
     return `<div class="kpi-card"><div class="kpi-name">${k.name}</div><div class="kpi-val">${k.value}</div>${k.delta?`<div class="kpi-delta ${dc}">${di} ${k.delta}</div>`:''}</div>`;
   }).join('');
-  document.getElementById('b-score-grid').style.display = 'grid';
+  document.getElementById('b-score-grid').style.display='grid';
 
-  // ── Ratio semaphore table ──
-  const ratios = p.ratios || R || {};
-  const hasRatios = Object.values(ratios).some(v=>v!=null&&v!=='null'&&!isNaN(parseFloat(v)));
-  if (hasRatios) {
-    let lastCat = '';
-    const rows = RATIO_REF.map(ref => {
-      const val = parseFloat(ratios[ref.key]);
-      if (isNaN(val) || ratios[ref.key]==null) return '';
-      const good   = ref.isGood(val);
-      const alert  = !good && ref.isAlert(val);
-      const status = good ? 'good' : alert ? 'alert' : 'neutral';
-      const col    = status==='good' ? 'var(--green)' : status==='alert' ? 'var(--red)' : 'var(--amber)';
-      const bg     = status==='good' ? 'rgba(0,200,83,0.12)' : status==='alert' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.1)';
-      const label  = status==='good' ? '● BUENO' : status==='alert' ? '● ALERTA' : '● NEUTRO';
-      const catHdr = ref.cat !== lastCat
-        ? `<tr><td colspan="8" style="padding:10px 14px 4px;font-size:10px;letter-spacing:.15em;color:var(--violet);text-transform:uppercase;font-weight:700;border-top:1px solid var(--border2);background:var(--bg3)">${ref.cat}</td></tr>`
-        : '';
-      lastCat = ref.cat;
-      return catHdr + `<tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
-        <td style="padding:9px 14px;color:var(--dim);font-size:11px">${ref.cat}</td>
-        <td style="padding:9px 14px;font-weight:700;color:var(--white)">${ref.name}</td>
-        <td style="padding:9px 14px;color:var(--dim);font-size:12px">${ref.desc}</td>
-        <td style="padding:9px 14px;text-align:center">
-          <span style="background:${bg};color:${col};border:1px solid ${col};border-radius:4px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.03em">${ref.fmt(val)}</span>
-        </td>
-        <td style="padding:9px 14px;text-align:center;font-size:11px;color:var(--green)">${ref.good}</td>
-        <td style="padding:9px 14px;text-align:center;font-size:11px;color:var(--amber)">${ref.neutral}</td>
-        <td style="padding:9px 14px;text-align:center;font-size:11px;color:var(--red)">${ref.alert}</td>
-        <td style="padding:9px 14px;text-align:center"><span style="color:${col};font-weight:700;font-size:12px">${label}</span></td>
+  // Ratio table
+  const ratios=p.ratios||R||{};
+  if(Object.values(ratios).some(v=>v!=null&&!isNaN(parseFloat(v)))){
+    let lastCat='';
+    document.getElementById('b-ratio-tbody').innerHTML=RATIO_REF.map(ref=>{
+      const val=parseFloat(ratios[ref.key]);
+      if(isNaN(val)||val==null) return '';
+      const good=ref.ok(val),bad=!good&&ref.bad(val);
+      const st=good?'good':bad?'alert':'neutral';
+      const col=st==='good'?'var(--green)':st==='alert'?'var(--red)':'var(--amber)';
+      const bg=st==='good'?'rgba(0,200,83,0.12)':st==='alert'?'rgba(239,68,68,0.12)':'rgba(245,158,11,0.1)';
+      const lbl=st==='good'?'● BUENO':st==='alert'?'● ALERTA':'● NEUTRO';
+      const catHdr=ref.cat!==lastCat?`<tr><td colspan="8" style="padding:10px 14px 4px;font-size:10px;letter-spacing:.15em;color:var(--violet);text-transform:uppercase;border-top:1px solid var(--border2);background:var(--bg3)">${ref.cat}</td></tr>`:'';
+      lastCat=ref.cat;
+      return catHdr+`<tr style="border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+        <td style="padding:8px 14px;color:var(--dim);font-size:11px">${ref.cat}</td>
+        <td style="padding:8px 14px;font-weight:700;color:var(--white)">${ref.name}</td>
+        <td style="padding:8px 14px;color:var(--dim);font-size:12px">${ref.desc}</td>
+        <td style="padding:8px 14px;text-align:center"><span style="background:${bg};color:${col};border:1px solid ${col};border-radius:4px;padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:17px">${ref.fmt(val)}</span></td>
+        <td style="padding:8px 14px;text-align:center;font-size:11px;color:var(--green)">${ref.good}</td>
+        <td style="padding:8px 14px;text-align:center;font-size:11px;color:var(--amber)">${ref.neu}</td>
+        <td style="padding:8px 14px;text-align:center;font-size:11px;color:var(--red)">${ref.alert}</td>
+        <td style="padding:8px 14px;text-align:center"><span style="color:${col};font-weight:700;font-size:12px">${lbl}</span></td>
       </tr>`;
     }).join('');
-    document.getElementById('b-ratio-tbody').innerHTML = rows;
-    document.getElementById('b-ratio-table-wrap').style.display = 'block';
+    document.getElementById('b-ratio-table-wrap').style.display='block';
   }
 
-  // Analysis blocks
-  const blocks = document.getElementById('b-an-blocks'); blocks.innerHTML = '';
-  if (p.summary) blocks.innerHTML += `<div class="an-block full"><div class="block-title">📋 Resumen Ejecutivo</div><div class="an-text"><p>${p.summary}</p></div></div>`;
-  if (p.strengths?.length) blocks.innerHTML += `<div class="an-block"><div class="block-title">✅ Fortalezas</div><div class="tag-list">${p.strengths.map(s=>`<div class="tag-item opportunity"><span class="tag-icon">+</span>${s}</div>`).join('')}</div></div>`;
-  if (p.risks?.length) blocks.innerHTML += `<div class="an-block"><div class="block-title">⚠️ Riesgos & Oportunidades</div><div class="tag-list">${p.risks.map(r=>`<div class="tag-item ${r.type}"><span class="tag-icon">${r.type==='risk'?'⚠':r.type==='opportunity'?'◉':'→'}</span>${r.text}</div>`).join('')}</div></div>`;
-  if (p.periodComparison) blocks.innerHTML += `<div class="an-block"><div class="block-title">📈 Evolución Histórica</div><div class="an-text"><p>${p.periodComparison}</p></div></div>`;
-  if (p.dcf) blocks.innerHTML += `<div class="an-block"><div class="block-title">💰 Valuación DCF</div><div style="display:flex;gap:10px;margin-bottom:10px"><div style="flex:1;background:var(--bg);border:1px solid rgba(239,68,68,.3);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--red);margin-bottom:3px">PESIMISTA</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--red)">${p.dcf.low}</div></div><div style="flex:1;background:var(--bg);border:1px solid rgba(0,200,83,.3);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--green);margin-bottom:3px">BASE</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--green)">${p.dcf.mid}</div></div><div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">OPTIMISTA</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--white)">${p.dcf.high}</div></div></div><div class="an-text"><p>${p.dcf.analysis}</p></div></div>`;
-  if (p.altmanZ) { const zc=p.altmanZ.zone==='safe'?'var(--green)':p.altmanZ.zone==='distress'?'var(--red)':'var(--amber)'; const zl=p.altmanZ.zone==='safe'?'ZONA SEGURA':p.altmanZ.zone==='distress'?'ZONA QUIEBRA':'ZONA GRIS'; blocks.innerHTML+=`<div class="an-block"><div class="block-title">🔬 Altman Z-Score</div><div style="display:flex;align-items:center;gap:16px;margin-bottom:10px"><div style="font-family:'Bebas Neue';font-size:52px;color:${zc};line-height:1">${p.altmanZ.score}</div><div><div style="font-size:12px;font-weight:700;color:${zc};letter-spacing:.1em">${zl}</div><div style="font-size:10px;color:var(--dim);margin-top:4px">Z > 2.9 Seguro · 1.8–2.9 Zona Gris · < 1.8 Riesgo</div></div></div><div class="an-text"><p>${p.altmanZ.interpretation}</p></div></div>`; }
-  if (p.sectorBenchmark) blocks.innerHTML += `<div class="an-block"><div class="block-title">🏭 Benchmark Sectorial</div><div class="an-text"><p>${p.sectorBenchmark}</p></div></div>`;
-  if (p.sentiment) blocks.innerHTML += `<div class="an-block"><div class="block-title">📰 Contexto Macro</div><div class="an-text"><p>${p.sentiment}</p></div></div>`;
-  if (p.recommendation) blocks.innerHTML += `<div class="an-block full" style="border-color:var(--cyan)"><div class="block-title" style="color:var(--cyan)">🎯 Conclusión & Recomendación</div><div class="an-text"><p>${p.recommendation}</p></div></div>`;
+  const bl=document.getElementById('b-an-blocks');bl.innerHTML='';
+  const add=(html)=>{bl.innerHTML+=html;};
+  if(p.summary) add(`<div class="an-block full"><div class="block-title">📋 Resumen Ejecutivo</div><div class="an-text"><p>${p.summary}</p></div></div>`);
+  if(p.strengths?.length) add(`<div class="an-block"><div class="block-title">✅ Fortalezas</div><div class="tag-list">${p.strengths.map(s=>`<div class="tag-item opportunity"><span class="tag-icon">+</span>${s}</div>`).join('')}</div></div>`);
+  if(p.risks?.length) add(`<div class="an-block"><div class="block-title">⚠️ Riesgos & Oportunidades</div><div class="tag-list">${p.risks.map(r=>`<div class="tag-item ${r.type}"><span class="tag-icon">${r.type==='risk'?'⚠':r.type==='opportunity'?'◉':'→'}</span>${r.text}</div>`).join('')}</div></div>`);
+  if(p.periodComparison) add(`<div class="an-block"><div class="block-title">📈 Evolución Histórica</div><div class="an-text"><p>${p.periodComparison}</p></div></div>`);
+  if(p.catalysts) add(`<div class="an-block"><div class="block-title">🔭 Catalizadores a Monitorear</div><div class="an-text"><p>${p.catalysts}</p></div></div>`);
+  if(p.sectorBenchmark) add(`<div class="an-block"><div class="block-title">🏭 Benchmark Sectorial</div><div class="an-text"><p>${p.sectorBenchmark}</p></div></div>`);
+  if(p.sentiment) add(`<div class="an-block"><div class="block-title">📰 Contexto Macro & Mercado</div><div class="an-text"><p>${p.sentiment}</p></div></div>`);
+  if(p.dcf) add(`<div class="an-block"><div class="block-title">💰 Valuación DCF</div><div style="display:flex;gap:10px;margin-bottom:10px"><div style="flex:1;background:var(--bg);border:1px solid rgba(239,68,68,.3);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--red);margin-bottom:3px">PESIMISTA</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--red)">${p.dcf.low}</div></div><div style="flex:1;background:var(--bg);border:1px solid rgba(0,200,83,.3);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--green);margin-bottom:3px">BASE</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--green)">${p.dcf.mid}</div></div><div style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">OPTIMISTA</div><div style="font-family:'Bebas Neue';font-size:22px;color:var(--white)">${p.dcf.high}</div></div></div><div class="an-text"><p>${p.dcf.analysis}</p></div></div>`);
+  if(p.altmanZ){const zc=p.altmanZ.zone==='safe'?'var(--green)':p.altmanZ.zone==='distress'?'var(--red)':'var(--amber)';const zl=p.altmanZ.zone==='safe'?'ZONA SEGURA':p.altmanZ.zone==='distress'?'ZONA QUIEBRA':'ZONA GRIS';add(`<div class="an-block"><div class="block-title">🔬 Altman Z-Score</div><div style="display:flex;align-items:center;gap:16px;margin-bottom:10px"><div style="font-family:'Bebas Neue';font-size:52px;color:${zc};line-height:1">${p.altmanZ.score}</div><div><div style="font-size:12px;font-weight:700;color:${zc};letter-spacing:.1em">${zl}</div><div style="font-size:10px;color:var(--dim);margin-top:4px">Z > 2.9 Seguro · 1.8–2.9 Zona Gris · < 1.8 Riesgo</div></div></div><div class="an-text"><p>${p.altmanZ.interpretation}</p></div></div>`);}
+  if(p.recommendation) add(`<div class="an-block full" style="border-color:var(--cyan)"><div class="block-title" style="color:var(--cyan)">🎯 Conclusión & Recomendación</div><div class="an-text" style="font-size:14px"><p>${p.recommendation}</p></div></div>`);
 
   document.getElementById('b-results').classList.add('show');
   setTimeout(()=>document.getElementById('b-results').scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 
-function bClearResults() {
-  document.getElementById('b-results').classList.remove('show');
-  document.getElementById('b-score-grid').style.display = 'none';
-  document.getElementById('b-ratio-table-wrap').style.display = 'none';
-  document.getElementById('b-an-blocks').innerHTML = '';
-  bHideLoading(); bHideError();
+function balExport(){
+  if(!bLastData)return;
+  const blob=new Blob([JSON.stringify(bLastData,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`equityks_${bLastData.ticker||'analysis'}_${Date.now()}.json`;a.click();
 }
 
-function bExport() {
-  if (!bLastData) return;
-  const blob = new Blob([JSON.stringify(bLastData,null,2)],{type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `equityks_${bLastData.ticker||'analysis'}_${Date.now()}.json`;
-  a.click();
-}
+// Init
+document.addEventListener('DOMContentLoaded',()=>{
+  balInitKeyUI();
+  balShowCat('popular');
+});
 
 
 
